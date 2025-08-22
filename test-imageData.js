@@ -5,6 +5,8 @@
     if (window._imgData?.cleanup) window._imgData.cleanup();
 
     const d = document;
+    const badgeSize = 28, vGap = 6, margin = 6;
+    let n = 1;
 
     window._imgData = {
       badges: [],
@@ -12,7 +14,8 @@
       scrollHandler: null,
       resizeHandler: null,
       keyHandler: null,
-      panel: null,
+      interval: null,
+      overlay: null,
       cleanup() {
         try {
           this.badges?.forEach(b => b.box?.remove());
@@ -20,232 +23,235 @@
           this.scrollHandler && removeEventListener("scroll", this.scrollHandler);
           this.resizeHandler && removeEventListener("resize", this.resizeHandler);
           this.keyHandler && removeEventListener("keydown", this.keyHandler);
-          this.panel?.remove();
-        } catch (e) { console.warn(e); }
+          this.interval && clearInterval(this.interval);
+          this.overlay && this.overlay.remove();
+        } catch (e) {
+          console.warn("Cleanup error", e);
+        }
       }
-    };
-
-    // Add keyframe animations
-    const style = d.createElement("style");
-    style.textContent = `
-      @keyframes pulseBadge {
-        0% { transform: scale(1); box-shadow: 0 1px 4px rgba(0,0,0,0.3) }
-        50% { transform: scale(1.08); box-shadow: 0 3px 10px rgba(0,0,0,0.4) }
-        100% { transform: scale(1); box-shadow: 0 1px 4px rgba(0,0,0,0.3) }
-      }
-      @keyframes pulseOverlay {
-        0% { transform: scale(1); box-shadow: 0 1px 2px rgba(0,0,0,0.2) }
-        50% { transform: scale(1.04); box-shadow: 0 2px 6px rgba(0,0,0,0.25) }
-        100% { transform: scale(1); box-shadow: 0 1px 2px rgba(0,0,0,0.2) }
-      }
-    `;
-    d.head.appendChild(style);
-
-    // Create overlay panel
-    const overlay = d.createElement("div");
-    overlay.id = LSK;
-    Object.assign(overlay.style, {
-      position: "fixed",
-      top: "0",
-      right: "0",
-      width: "420px",
-      height: "100%",
-      background: "#fff",
-      borderLeft: "3px solid #000",
-      boxShadow: "-2px 0 5px rgba(0,0,0,.3)",
-      zIndex: 2147483647,
-      font: "14px/1.4 sans-serif",
-      color: "#000",
-      display: "flex",
-      flexDirection: "column"
-    });
-    d.body.appendChild(overlay);
-
-    // Header
-    const header = d.createElement("h1");
-    header.textContent = "Image Data";
-    Object.assign(header.style, {
-      margin: "0",
-      padding: "10px",
-      background: "#000",
-      color: "#fff",
-      textAlign: "center",
-      fontSize: "18px",
-      fontWeight: "700"
-    });
-    overlay.appendChild(header);
-
-    // Scrollable content
-    const scrollBox = d.createElement("div");
-    Object.assign(scrollBox.style, {
-      flex: "1",
-      overflow: "auto",
-      padding: "10px"
-    });
-    overlay.appendChild(scrollBox);
-
-    const txt = d.createElement("div");
-    scrollBox.appendChild(txt);
-
-    // Footer
-    const footer = d.createElement("div");
-    footer.textContent = "Press Esc to close";
-    Object.assign(footer.style, {
-      padding: "6px",
-      background: "#f0f0f0",
-      borderTop: "1px solid #ccc",
-      textAlign: "right",
-      fontSize: "12px",
-      color: "#555"
-    });
-    overlay.appendChild(footer);
-
-    const badgeSize = 28;
-    const items = [];
-
-    // Function to create floating badges
-    const makeBadge = (num, anchorId, offset = 0) => {
-      const b = d.createElement("div");
-      Object.assign(b.style, {
-        position: "absolute",
-        top: "0px",
-        left: "0px",
-        width: `${badgeSize}px`,
-        height: `${badgeSize}px`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#FFA500",
-        color: "#000",
-        fontWeight: "700",
-        fontSize: "14px",
-        border: "2px solid #000",
-        textAlign: "center",
-        userSelect: "none",
-        textDecoration: "none",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-        cursor: "pointer",
-        zIndex: 2147483646,
-        transition: "all .2s ease"
-      });
-      b.textContent = num;
-      b.onmouseover = () => {
-        b.style.background = "#ff8c00";
-        b.style.animation = `pulseBadge 1s ease-in-out ${offset}s infinite`;
-      };
-      b.onmouseout = () => {
-        b.style.background = "#FFA500";
-        b.style.animation = "";
-        b.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)";
-        b.style.transform = "scale(1)";
-      };
-      b.onclick = e => {
-        e.preventDefault();
-        document.getElementById(anchorId).scrollIntoView({ behavior: "smooth", block: "center" });
-      };
-      return b;
     };
 
     // Collect images
-    d.querySelectorAll("img").forEach((img, i) => {
-      if (!img.src) return;
-      const anchorId = `imgData_${Date.now()}_${i}`;
-      img.id = img.id || anchorId;
+    const imgs = [...d.images];
+    const items = [];
+    const badges = window._imgData.badges;
 
-      // Stagger offset for pulse effect
-      const offset = (i % 5) * 0.1;
-      const box = makeBadge(i + 1, anchorId, offset);
-      d.body.appendChild(box);
-      window._imgData.badges.push({ img, box });
+    for (const e of imgs) {
+      try {
+        const s = (e.src || "").trim();
+        const sl = s.toLowerCase();
+        const alt = (e.alt || "").toLowerCase();
+        if (!s || sl.includes("qrcode") || alt.includes("qr") || sl.startsWith("data:")) continue;
+        const name = (s.split("/").pop().split("?")[0]) || "";
+        if (!name) continue;
 
-      items.push({
-        anchorId: img.id,
-        name: img.src.split("/").pop() || "(no name)",
-        dim: `${img.naturalWidth}×${img.naturalHeight}`,
-        size: "?",
-        alt: img.alt || "(none)",
-        caption: img.title || img.closest("figure")?.querySelector("figcaption")?.innerText || "(none)",
-        url: img.src
-      });
+        e.id = `imgData_${n}`;
+        items.push({
+          name,
+          dim: `${e.naturalWidth}×${e.naturalHeight} actual, ${e.width}×${e.height} rendered`,
+          size: "Fetching...",
+          alt: e.alt || "None",
+          caption: (e.closest("figure")?.querySelector("figcaption")?.textContent || "").trim().replace(/\(.*?\)/g,"").replace(/Open image in slideshow/gi,"").trim() || "None",
+          url: e.src,
+          anchorId: e.id
+        });
+
+        const a = d.createElement("a");
+        a.textContent = n;
+        a.href = e.src;
+        a.target = "_blank";
+        Object.assign(a.style, {
+          position: "absolute",
+          top: "0",
+          left: "0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#FFA500",
+          color: "#000",
+          fontWeight: "700",
+          fontSize: "14px",
+          border: "2px solid #000",
+          width: badgeSize + "px",
+          height: badgeSize + "px",
+          lineHeight: badgeSize + "px",
+          textAlign: "center",
+          pointerEvents: "auto",
+          userSelect: "none",
+          zIndex: 2147483648,
+          textDecoration: "none",
+          cursor: "pointer",
+          borderRadius: "0%", // square badges
+          boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+          transition: "all .2s ease"
+        });
+        a.onclick = e => { e.preventDefault(); document.getElementById(a.textContent).scrollIntoView({behavior:'smooth',block:'center'}); };
+        d.body.appendChild(a);
+        badges.push({ img: e, box: a });
+        n++;
+      } catch {}
+    }
+
+    // Create overlay panel
+    const o = d.createElement("div");
+    o.id = "img-data-overlay";
+    window._imgData.overlay = o;
+    Object.assign(o.style, {
+      position: "fixed",
+      right: "0px",
+      top: "10px",
+      width: "520px",
+      height: "240px",
+      maxHeight: "90vh",
+      display: "flex",
+      flexDirection: "column",
+      background: "#f8f9fa",
+      color: "#1a1a1a",
+      font: "12px 'Courier New', monospace",
+      zIndex: 2147483647,
+      whiteSpace: "pre-wrap",
+      border: "1px solid #ccc",
+      borderRadius: "10px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      boxSizing: "border-box",
+      overflow: "hidden"
     });
 
-    // Update overlay content
-    const update = () => {
-      txt.innerHTML = items.length ? items.map((it, i) => `
+    const headerH = 56, footerH = 56;
+
+    // Create header/footer bars with drag
+    const makeGrip = () => {
+      const g = d.createElement("div");
+      Object.assign(g.style, {
+        width: "42px",
+        height: "18px",
+        borderRadius: "4px",
+        marginRight: "8px",
+        background: "repeating-linear-gradient(90deg,#888 0 4px,transparent 4 8px)"
+      });
+      return g;
+    };
+
+    const mkbar = pos => {
+      const b = d.createElement("div");
+      Object.assign(b.style, {
+        height: headerH + "px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: pos === "top" ? "space-between" : "flex-end",
+        padding: "6px 10px",
+        background: "#34495e",
+        color: "#fff",
+        fontWeight: 700,
+        cursor: "grab",
+        userSelect: "none",
+        borderBottom: pos === "top" ? "1px solid rgba(0,0,0,0.08)" : "none",
+        borderTop: pos === "bottom" ? "1px solid rgba(0,0,0,0.08)" : "none",
+        flexShrink: 0
+      });
+
+      if(pos === "top") {
+        const left = d.createElement("div"); left.style.display="flex"; left.style.alignItems="center";
+        left.appendChild(makeGrip());
+        const title = d.createElement("div"); title.textContent="IMAGE DATA"; left.appendChild(title);
+        b.appendChild(left);
+
+        const btns = d.createElement("div"); btns.style.display="flex"; btns.style.alignItems="center"; btns.style.gap="8px";
+        const toggleGroup = d.createElement("div");
+        Object.assign(toggleGroup.style,{display:"flex",alignItems:"center",background:"#95a5a6",borderRadius:"6px",padding:"2px 6px",cursor:"pointer",userSelect:"none"});
+        const label = d.createElement("span"); label.textContent="Toggle Badges"; label.style.fontSize="12px"; label.style.marginRight="6px";
+        label.setAttribute("data-drag-ignore","1"); label.onpointerdown=e=>e.stopPropagation();
+        const toggleBtn = d.createElement("button"); toggleBtn.textContent="🔢"; toggleBtn.title="Toggle Number Badges";
+        Object.assign(toggleBtn.style,{border:"none",background:"transparent",fontSize:"14px",cursor:"pointer"});
+        toggleBtn.setAttribute("data-drag-ignore","1"); toggleBtn.onpointerdown=e=>e.stopPropagation();
+        toggleGroup.onclick = e=>{ e.stopPropagation(); window._imgData.badgesVisible=!window._imgData.badgesVisible; badges.forEach(bb=>bb.box.style.display=window._imgData.badgesVisible?"flex":"none"); };
+        toggleGroup.append(label,toggleBtn); btns.append(toggleGroup);
+
+        const x = d.createElement("div"); x.textContent="×";
+        Object.assign(x.style,{cursor:"pointer",fontSize:"20px",padding:"0",margin:"-6px 0 -6px 12px",borderRadius:"50%",width:"32px",height:"32px",background:"#e74c3c",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"});
+        x.title="Close"; x.setAttribute("data-drag-ignore","1"); x.onpointerdown=e=>e.stopPropagation(); x.onclick=e=>{e.stopPropagation(); o.remove(); window._imgData.cleanup();};
+        btns.append(x); b.appendChild(btns);
+      }
+
+      b.setAttribute("data-drag-handle","1"); return b;
+    };
+
+    const txt = d.createElement("div"); Object.assign(txt.style,{padding:"10px",overflow:"auto",flex:"1",background:"#ffffff"});
+    const autosize = ()=>{ try { o.style.height = Math.max(140,Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9*innerHeight))) + "px"; } catch{} };
+    
+    const update = ()=>{
+      txt.innerHTML = items.length ? items.map((it,i)=>`
         <div style="display:flex;padding:8px 0;border-bottom:1px solid #eee;align-items:flex-start">
           <div style="flex:0 0 ${badgeSize}px;display:flex;align-items:center;justify-content:center;margin-right:8px;">
-            <a href="#${it.anchorId}"
-              onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;"
-              style="display:flex;align-items:center;justify-content:center;
-                     background:#FFA500;color:#000;font-weight:700;font-size:14px;
-                     border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;
-                     text-align:center;user-select:none;text-decoration:none;
-                     box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer;
-                     transition:all .2s ease"
-              onmouseover="this.style.background='#ff8c00';this.style.animation='pulseOverlay 1.2s ease-in-out infinite'"
-              onmouseout="this.style.background='#FFA500';this.style.animation='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.3)';this.style.transform='scale(1)'">
-              ${i + 1}
+            <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;"
+              style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer;border-radius:0%">
+              ${i+1}
             </a>
           </div>
-          <div style="flex:1;line-height:1.4">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <a href="#${it.anchorId}"
-                onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;"
-                style="display:flex;align-items:center;justify-content:center;
-                       background:#FFA500;color:#000;font-weight:700;font-size:14px;
-                       border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;
-                       text-align:center;user-select:none;text-decoration:none;
-                       box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer;
-                       transition:all .2s ease"
-                onmouseover="this.style.background='#ff8c00';this.style.animation='pulseOverlay 1.2s ease-in-out infinite'"
-                onmouseout="this.style.background='#FFA500';this.style.animation='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.3)';this.style.transform='scale(1)'">
-                ${i + 1}
-              </a>
-              <span><strong>Name:</strong> ${it.name}</span>
-            </div>
-            <span><strong>Dimensions:</strong> ${it.dim}</span><br>
-            <span><strong>Size:</strong> ${it.size}</span><br>
-            <span><strong>Alt:</strong> ${it.alt}</span><br>
-            <span><strong>Caption:</strong> ${it.caption}</span><br>
-            <span><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></span>
+          <div style="flex:1;">
+            <div><strong>Name:</strong> ${it.name}</div>
+            <div><strong>Dimensions:</strong> ${it.dim}</div>
+            <div><strong>Size:</strong> ${it.size}</div>
+            <div><strong>Alt:</strong> ${it.alt}</div>
+            <div><strong>Caption:</strong> ${it.caption}</div>
+            <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
           </div>
         </div>
       `).join("") : "No images found.";
       autosize();
     };
 
-    // Autosize overlay
-    const autosize = () => {
-      overlay.style.height = window.innerHeight + "px";
-      overlay.style.width = "420px";
-    };
-
     update();
+    o.append(mkbar("top"), txt, mkbar("bottom"));
+    d.body.appendChild(o);
 
-    // Scroll badges with page
-    window._imgData.scrollHandler = () => {
-      window._imgData.badges.forEach(({ img, box }) => {
-        const r = img.getBoundingClientRect();
-        box.style.top = window.scrollY + r.top + "px";
-        box.style.left = window.scrollX + r.left + "px";
+    // Dragging
+    let drag = null;
+    const startDrag=(e,t)=>{if(e.target.closest("[data-drag-ignore]"))return; const r=o.getBoundingClientRect(); drag={dx:e.clientX-r.left,dy:e.clientY-r.top}; t.style.cursor="grabbing"; e.preventDefault();};
+    const onDrag=e=>{if(!drag)return; o.style.left=e.clientX-drag.dx+"px"; o.style.top=e.clientY-drag.dy+"px"; o.style.right="auto";};
+    const endDrag=e=>{drag=null; d.querySelectorAll("[data-drag-handle]").forEach(b=>b.style.cursor="grab");};
+    d.addEventListener("pointermove",onDrag); d.addEventListener("pointerup",endDrag);
+    d.querySelectorAll("[data-drag-handle]").forEach(b=>b.onpointerdown=e=>startDrag(e,b));
+
+    // Resizers
+    ["n","s","e","w","ne","nw","se","sw"].forEach(dir=>{
+      const h=d.createElement("div"); h.className="resize-handle"; Object.assign(h.style,{position:"absolute",background:"#09f",opacity:".7",zIndex:"2147483647",borderRadius:"3px",cursor:dir+"-resize"});
+      const sz=10;
+      dir.includes("n")&&(h.style.top="0"); dir.includes("s")&&(h.style.bottom="0"); dir.includes("e")&&(h.style.right="0"); dir.includes("w")&&(h.style.left="0");
+      if(["n","s"].includes(dir)){h.style.left="50%"; h.style.marginLeft=-sz/2+"px"; h.style.width=sz+"px"; h.style.height=sz+"px";}
+      else if(["e","w"].includes(dir)){h.style.top="50%"; h.style.marginTop=-sz/2+"px"; h.style.width=sz+"px"; h.style.height=sz+"px";}
+      else {h.style.width=sz+"px"; h.style.height=sz+"px";}
+      let startX,startY,startW,startH,startL,startT;
+      h.addEventListener("pointerdown",e=>{
+        e.preventDefault(); e.stopPropagation();
+        startX=e.clientX; startY=e.clientY;
+        const r=o.getBoundingClientRect(); startW=r.width; startH=r.height; startL=r.left; startT=r.top;
+        const onMove=me=>{
+          let dx=me.clientX-startX, dy=me.clientY-startY; let w=startW, h_=startH, l=startL, t=startT;
+          dir.includes("e")&&(w=Math.max(200,startW+dx)); dir.includes("s")&&(h_=Math.max(100,startH+dy));
+          dir.includes("w")&&(w=Math.max(200,startW-dx), l=startL+dx); dir.includes("n")&&(h_=Math.max(100,startH-dy), t=startT+dy);
+          o.style.width=w+"px"; o.style.height=h_+"px"; o.style.left=l+"px"; o.style.top=t+"px"; o.style.right="auto";
+        };
+        const onUp=()=>{ d.removeEventListener("pointermove",onMove); d.removeEventListener("pointerup",onUp); };
+        d.addEventListener("pointermove",onMove); d.addEventListener("pointerup",onUp);
       });
-    };
+      o.appendChild(h);
+    });
 
-    window._imgData.resizeHandler = autosize;
+    // Floating badges move with scroll
+    window._imgData.scrollHandler=()=>{badges.forEach(b=>{const r=b.img.getBoundingClientRect(); b.box.style.top=window.scrollY+r.top+"px"; b.box.style.left=window.scrollX+r.left+"px";});};
+    window._imgData.resizeHandler=autosize;
+    addEventListener("scroll",window._imgData.scrollHandler);
+    addEventListener("resize",window._imgData.resizeHandler);
 
     // ESC to close
-    window._imgData.keyHandler = e => {
-      if (e.key === "Escape") {
-        window._imgData.cleanup();
-        delete window._imgData;
-      }
-    };
+    window._imgData.keyHandler=e=>{ if(e.key==="Escape"){window._imgData.cleanup(); delete window._imgData;} };
+    addEventListener("keydown",window._imgData.keyHandler);
 
-    addEventListener("scroll", window._imgData.scrollHandler);
-    addEventListener("resize", window._imgData.resizeHandler);
-    addEventListener("keydown", window._imgData.keyHandler);
+    // Fetch image sizes
+    items.forEach(it=>{ fetch(it.url,{method:"HEAD"}).then(r=>{const cl=r.headers.get("content-length"); it.size=cl?(+cl/1024).toFixed(1)+" KB":"Unknown"; update();}).catch(()=>{it.size="Error"; update();}); });
 
-  } catch (e) {
-    alert("Bookmarklet error: " + e);
-  }
+    setTimeout(()=>{ window._imgData.scrollHandler(); autosize(); },150);
+
+  } catch(e){ console.error(e); }
 })();
