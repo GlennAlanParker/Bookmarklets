@@ -32,7 +32,6 @@
             vGap = 6,
             margin = 6;
 
-        // Update badge positions on images
         const updateBadgePositions = () => {
             const placed = [];
             for (const b of badges) {
@@ -67,7 +66,6 @@
             }
         };
 
-        // Prepare image items and badges
         for (const e of imgs) {
             try {
                 const s = (e.src || "").trim(),
@@ -122,7 +120,7 @@
                     opacity: "1",
                     transition: "opacity .12s ease",
                     cursor: "pointer",
-                    borderRadius: "4px", // Square badge
+                    borderRadius: "4px",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
                 });
 
@@ -143,7 +141,7 @@
 
         window._imgData.interval = setInterval(updateBadgePositions, 300);
 
-        // Overlay creation
+        // Overlay
         const o = d.createElement("div");
         o.id = "img-data-overlay";
         window._imgData.overlay = o;
@@ -162,7 +160,6 @@
             color: "#1a1a1a",
             font: "12px 'Courier New', monospace",
             zIndex: 2147483647,
-            whiteSpace: "pre-wrap",
             border: "1px solid #ccc",
             borderRadius: "10px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
@@ -170,8 +167,7 @@
             overflow: "hidden"
         });
 
-        const headerH = 56,
-            footerH = 56;
+        const headerH = 56, footerH = 56;
 
         const makeGrip = () => {
             const g = d.createElement("div");
@@ -296,12 +292,7 @@
         };
 
         const txt = d.createElement("div");
-        Object.assign(txt.style, {
-            padding: "10px",
-            overflow: "auto",
-            flex: "1",
-            background: "#ffffff"
-        });
+        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#ffffff" });
 
         const autosize = () => {
             try {
@@ -316,24 +307,20 @@
 
         const update = () => {
             txt.innerHTML = items.length
-                ? items
-                      .map(
-                          (it, i) => `<div style="display:flex;padding:4px 0;align-items:flex-start">
-                    <div style="flex:0 0 ${badgeSize}px;display:flex;align-items:center;justify-content:center;margin-right:6px;">
-                        <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;" style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;line-height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer">
-                        ${i + 1}</a>
-                    </div>
-                    <div style="flex:1;">
-                        <div><strong>Name:</strong> ${it.name}</div>
-                        <div><strong>Dimensions:</strong> ${it.dim}</div>
-                        <div><strong>Size:</strong> ${it.size}</div>
-                        <div><strong>Alt:</strong> ${it.alt}</div>
-                        <div><strong>Caption:</strong> ${it.caption}</div>
-                        <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
-                    </div>
-                </div>`
-                      )
-                      .join("")
+                ? items.map((it, i) =>
+                    `<div style="display:flex;padding:4px 0;align-items:flex-start">
+                        <div style="flex:0 0 ${badgeSize}px;display:flex;align-items:center;justify-content:center;margin-right:6px;">
+                            <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;" style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;line-height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer">${i + 1}</a>
+                        </div>
+                        <div style="flex:1;">
+                            <div><strong>Name:</strong>${it.name}</div>
+                            <div><strong>Dimensions:</strong>${it.dim}</div>
+                            <div><strong>Size:</strong>${it.size}</div>
+                            <div><strong>Alt:</strong>${it.alt}</div>
+                            <div><strong>Caption:</strong>${it.caption}</div>
+                            <div><strong>URL:</strong><a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
+                        </div>
+                    </div>`).join("")
                 : "No images found.";
             autosize();
         };
@@ -342,7 +329,6 @@
         o.append(mkbar("top"), txt, mkbar("bottom"));
         d.body.appendChild(o);
 
-        // Load and save overlay position
         const savePos = () => {
             try {
                 const r = o.getBoundingClientRect();
@@ -355,11 +341,7 @@
                 const s = localStorage.getItem(LSK);
                 if (!s) return;
                 let p;
-                try {
-                    p = JSON.parse(s);
-                } catch {
-                    return void localStorage.removeItem(LSK);
-                }
+                try { p = JSON.parse(s); } catch { return void localStorage.removeItem(LSK); }
                 o.style.left = p.l + "px";
                 o.style.top = p.t + "px";
                 o.style.width = p.w + "px";
@@ -370,7 +352,6 @@
 
         loadPos();
 
-        // Fetch image sizes
         items.forEach(it => {
             fetch(it.url, { method: "HEAD" })
                 .then(r => {
@@ -378,18 +359,12 @@
                     it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
                     update();
                 })
-                .catch(() => {
-                    it.size = "Error";
-                    update();
-                });
+                .catch(() => { it.size = "Error"; update(); });
         });
 
-        setTimeout(() => {
-            updateBadgePositions();
-            autosize();
-        }, 150);
+        setTimeout(() => { updateBadgePositions(); autosize(); }, 150);
 
-        // Dragging logic
+        // Drag logic
         let drag = null;
         const startDrag = (e, t) => {
             if (e.target.closest("[data-drag-ignore]")) return;
@@ -406,96 +381,10 @@
             o.style.top = ny + "px";
             o.style.right = "auto";
         };
-        const endDrag = e => {
-            drag = null;
-            d.querySelectorAll("[data-drag-handle]").forEach(b => (b.style.cursor = "grab"));
-            savePos();
-        };
+        const endDrag = e => { drag = null; d.querySelectorAll("[data-drag-handle]").forEach(b => (b.style.cursor = "grab")); savePos(); };
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => (b.onpointerdown = e => startDrag(e, b)));
 
-        // Resize handles
-        ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(dir => {
-            const h = d.createElement("div");
-            h.className = "resize-handle";
-            Object.assign(h.style, {
-                position: "absolute",
-                background: "#09f",
-                opacity: ".7",
-                zIndex: "2147483647",
-                borderRadius: "3px",
-                cursor: dir + "-resize"
-            });
-            const sz = 10;
-            if (dir.includes("n")) h.style.top = "0";
-            if (dir.includes("s")) h.style.bottom = "0";
-            if (dir.includes("e")) h.style.right = "0";
-            if (dir.includes("w")) h.style.left = "0";
-
-            if (dir === "n" || dir === "s") {
-                h.style.left = "50%";
-                h.style.marginLeft = -sz / 2 + "px";
-                h.style.width = sz + "px";
-                h.style.height = sz + "px";
-            } else if (dir === "e" || dir === "w") {
-                h.style.top = "50%";
-                h.style.marginTop = -sz / 2 + "px";
-                h.style.width = sz + "px";
-                h.style.height = sz + "px";
-            } else {
-                h.style.width = sz + "px";
-                h.style.height = sz + "px";
-            }
-
-            let startX, startY, startW, startH, startL, startT;
-
-            h.addEventListener("pointerdown", e => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                startX = e.clientX;
-                startY = e.clientY;
-
-                const r = o.getBoundingClientRect();
-                startW = r.width;
-                startH = r.height;
-                startL = r.left;
-                startT = r.top;
-
-                const onMove = me => {
-                    let dx = me.clientX - startX,
-                        dy = me.clientY - startY,
-                        w = startW,
-                        h = startH,
-                        l = startL,
-                        t = startT;
-
-                    if (dir.includes("e")) w = Math.max(200, startW + dx);
-                    if (dir.includes("s")) h = Math.max(100, startH + dy);
-                    if (dir.includes("w")) (w = Math.max(200, startW - dx)), (l = startL + dx);
-                    if (dir.includes("n")) (h = Math.max(100, startH - dy)), (t = startT + dy);
-
-                    o.style.width = w + "px";
-                    o.style.height = h + "px";
-                    o.style.left = l + "px";
-                    o.style.top = t + "px";
-                    o.style.right = "auto";
-                };
-
-                const onUp = () => {
-                    d.removeEventListener("pointermove", onMove);
-                    d.removeEventListener("pointerup", onUp);
-                    savePos();
-                };
-
-                d.addEventListener("pointermove", onMove);
-                d.addEventListener("pointerup", onUp);
-            });
-
-            o.appendChild(h);
-        });
-    } catch (e) {
-        console.error(e);
-    }
+    } catch (e) { console.error(e); }
 })();
