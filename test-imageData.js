@@ -1,4 +1,4 @@
-javascript:(() => {
+(() => {
     try {
         const LSK = "imgDataOverlay_v1";
 
@@ -32,6 +32,7 @@ javascript:(() => {
             vGap = 6,
             margin = 6;
 
+        // Update badge positions on images
         const updateBadgePositions = () => {
             const placed = [];
             for (const b of badges) {
@@ -66,6 +67,7 @@ javascript:(() => {
             }
         };
 
+        // Prepare image items and badges
         for (const e of imgs) {
             try {
                 const s = (e.src || "").trim(),
@@ -120,7 +122,7 @@ javascript:(() => {
                     opacity: "1",
                     transition: "opacity .12s ease",
                     cursor: "pointer",
-                    borderRadius: "50%",
+                    borderRadius: "4px", // Square badge
                     boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
                 });
 
@@ -171,7 +173,6 @@ javascript:(() => {
         const headerH = 56,
             footerH = 56;
 
-        // Drag handle creator
         const makeGrip = () => {
             const g = d.createElement("div");
             Object.assign(g.style, {
@@ -184,8 +185,7 @@ javascript:(() => {
             return g;
         };
 
-        // Function to create top/bottom bars
-        const mkbar = (pos) => {
+        const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
                 height: headerH + "px",
@@ -212,7 +212,6 @@ javascript:(() => {
                 const title = d.createElement("div");
                 title.textContent = "IMAGE DATA";
                 left.appendChild(title);
-
                 b.appendChild(left);
 
                 const btns = d.createElement("div");
@@ -220,7 +219,6 @@ javascript:(() => {
                 btns.style.alignItems = "center";
                 btns.style.gap = "8px";
 
-                // Toggle badges button
                 const toggleGroup = d.createElement("div");
                 Object.assign(toggleGroup.style, {
                     display: "flex",
@@ -262,7 +260,6 @@ javascript:(() => {
                 toggleGroup.append(label, toggleBtn);
                 btns.append(toggleGroup);
 
-                // Close button
                 const x = d.createElement("div");
                 x.textContent = "×";
                 Object.assign(x.style, {
@@ -306,7 +303,6 @@ javascript:(() => {
             background: "#ffffff"
         });
 
-        // Overlay autosize
         const autosize = () => {
             try {
                 const contentH = txt.scrollHeight,
@@ -314,7 +310,6 @@ javascript:(() => {
                     maxH = Math.floor(0.9 * innerHeight),
                     minH = 140,
                     h = Math.max(minH, Math.min(desired, maxH));
-
                 o.style.height = h + "px";
             } catch {}
         };
@@ -323,9 +318,10 @@ javascript:(() => {
             txt.innerHTML = items.length
                 ? items
                       .map(
-                          (it, i) => `<div style="display:flex;padding:8px 0;border-bottom:1px solid #eee;align-items:flex-start">
-                    <div style="flex:0 0 ${badgeSize}px;display:flex;align-items:center;justify-content:center;margin-right:8px;">
-                        <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;" style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;line-height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer">${i + 1}</a>
+                          (it, i) => `<div style="display:flex;padding:4px 0;align-items:flex-start">
+                    <div style="flex:0 0 ${badgeSize}px;display:flex;align-items:center;justify-content:center;margin-right:6px;">
+                        <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;" style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;line-height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer">
+                        ${i + 1}</a>
                     </div>
                     <div style="flex:1;">
                         <div><strong>Name:</strong> ${it.name}</div>
@@ -346,7 +342,7 @@ javascript:(() => {
         o.append(mkbar("top"), txt, mkbar("bottom"));
         d.body.appendChild(o);
 
-        // Position saving/loading
+        // Load and save overlay position
         const savePos = () => {
             try {
                 const r = o.getBoundingClientRect();
@@ -375,7 +371,7 @@ javascript:(() => {
         loadPos();
 
         // Fetch image sizes
-        items.forEach((it) => {
+        items.forEach(it => {
             fetch(it.url, { method: "HEAD" })
                 .then(r => {
                     const cl = r.headers.get("content-length");
@@ -395,7 +391,6 @@ javascript:(() => {
 
         // Dragging logic
         let drag = null;
-
         const startDrag = (e, t) => {
             if (e.target.closest("[data-drag-ignore]")) return;
             const r = o.getBoundingClientRect();
@@ -403,7 +398,6 @@ javascript:(() => {
             t.style.cursor = "grabbing";
             e.preventDefault();
         };
-
         const onDrag = e => {
             if (!drag) return;
             const nx = e.clientX - drag.dx,
@@ -412,13 +406,11 @@ javascript:(() => {
             o.style.top = ny + "px";
             o.style.right = "auto";
         };
-
         const endDrag = e => {
             drag = null;
             d.querySelectorAll("[data-drag-handle]").forEach(b => (b.style.cursor = "grab"));
             savePos();
         };
-
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => (b.onpointerdown = e => startDrag(e, b)));
@@ -427,21 +419,26 @@ javascript:(() => {
         ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(dir => {
             const h = d.createElement("div");
             h.className = "resize-handle";
-            Object.assign(h.style, { position: "absolute", background: "#09f", opacity: ".7", zIndex: "2147483647", borderRadius: "3px", cursor: dir + "-resize" });
-
+            Object.assign(h.style, {
+                position: "absolute",
+                background: "#09f",
+                opacity: ".7",
+                zIndex: "2147483647",
+                borderRadius: "3px",
+                cursor: dir + "-resize"
+            });
             const sz = 10;
-
             if (dir.includes("n")) h.style.top = "0";
             if (dir.includes("s")) h.style.bottom = "0";
             if (dir.includes("e")) h.style.right = "0";
             if (dir.includes("w")) h.style.left = "0";
 
-            if ("n" === dir || "s" === dir) {
+            if (dir === "n" || dir === "s") {
                 h.style.left = "50%";
                 h.style.marginLeft = -sz / 2 + "px";
                 h.style.width = sz + "px";
                 h.style.height = sz + "px";
-            } else if ("e" === dir || "w" === dir) {
+            } else if (dir === "e" || dir === "w") {
                 h.style.top = "50%";
                 h.style.marginTop = -sz / 2 + "px";
                 h.style.width = sz + "px";
