@@ -1,4 +1,4 @@
-// img-data-overlay.js
+// ImageData.js
 (function() {
     const LSK = "imgDataOverlay_v1";
 
@@ -28,7 +28,6 @@
     let n = 1;
     const badgeSize = 26, vGap = 6, margin = 6;
 
-    // Badge positioning
     const updateBadgePositions = () => {
         const placed = [];
         badges.forEach(b => {
@@ -38,23 +37,14 @@
                 const bw = badgeSize, bh = badgeSize;
                 let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - bw - margin, Math.round(docX - 8)));
                 let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - bh - margin, Math.round(docY - 8)));
-
                 placed.forEach(p => {
                     if (Math.abs(p.x - x) < bw + 8 && !((y + bh + vGap < p.y) || y > p.y + p.bh + vGap)) {
                         y = p.y + p.bh + vGap;
                     }
                 });
-
-                Object.assign(b.box.style, {
-                    left: x + "px",
-                    top: y + "px",
-                    display: window._imgData.badgesVisible ? "flex" : "none",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: "1"
-                });
+                Object.assign(b.box.style, { left: x + "px", top: y + "px", display: window._imgData.badgesVisible ? "flex" : "none", alignItems: "center", justifyContent: "center", opacity: "1" });
                 placed.push({ x, y, bw, bh });
-            } catch (e) { }
+            } catch { }
         });
     };
 
@@ -84,30 +74,7 @@
             a.href = e.src;
             a.target = "_blank";
             a.rel = "noopener noreferrer";
-            Object.assign(a.style, {
-                position: "absolute",
-                top: "0",
-                left: "0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#FFA500",
-                color: "#000",
-                fontWeight: "700",
-                fontSize: "14px",
-                border: "2px solid #000",
-                width: badgeSize + "px",
-                height: badgeSize + "px",
-                lineHeight: badgeSize + "px",
-                textAlign: "center",
-                pointerEvents: "auto",
-                userSelect: "none",
-                zIndex: 2147483648,
-                textDecoration: "none",
-                borderRadius: "50%",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                cursor: "pointer"
-            });
+            Object.assign(a.style, { position: "absolute", top: "0", left: "0", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFA500", color: "#000", fontWeight: "700", fontSize: "14px", border: "2px solid #000", width: badgeSize + "px", height: badgeSize + "px", lineHeight: badgeSize + "px", textAlign: "center", pointerEvents: "auto", userSelect: "none", zIndex: 2147483648, textDecoration: "none", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", cursor: "pointer" });
             d.body.appendChild(a);
             badges.push({ img: e, box: a });
             n++;
@@ -150,36 +117,15 @@
 
     const headerH = 64, footerH = 28;
 
-    // Create top and bottom bars
     const makeGrip = () => {
         const g = d.createElement("div");
-        Object.assign(g.style, {
-            width: "42px",
-            height: "18px",
-            borderRadius: "4px",
-            marginRight: "8px",
-            background: "repeating-linear-gradient(90deg,#888 0 4px,transparent 4 8px)"
-        });
+        Object.assign(g.style, { width: "42px", height: "18px", borderRadius: "4px", marginRight: "8px", background: "repeating-linear-gradient(90deg,#888 0 4px,transparent 4 8px)" });
         return g;
     };
 
     const mkbar = pos => {
         const b = d.createElement("div");
-        Object.assign(b.style, {
-            height: (pos === "top" ? headerH : footerH) + "px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: pos === "top" ? "space-between" : "flex-end",
-            padding: "6px 10px",
-            background: "#34495e",
-            color: "#fff",
-            fontWeight: 700,
-            cursor: "grab",
-            userSelect: "none",
-            borderBottom: pos === "top" ? "1px solid rgba(0,0,0,0.08)" : "none",
-            borderTop: pos === "bottom" ? "1px solid rgba(0,0,0,0.08)" : "none",
-            flexShrink: 0
-        });
+        Object.assign(b.style, { height: (pos === "top" ? headerH : footerH) + "px", display: "flex", alignItems: "center", justifyContent: pos === "top" ? "space-between" : "flex-end", padding: "6px 10px", background: "#34495e", color: "#fff", fontWeight: 700, cursor: "grab", userSelect: "none", borderBottom: pos === "top" ? "1px solid rgba(0,0,0,0.08)" : "none", borderTop: pos === "bottom" ? "1px solid rgba(0,0,0,0.08)" : "none", flexShrink: 0 });
 
         if (pos === "top") {
             const left = d.createElement("div");
@@ -189,14 +135,7 @@
 
             const title = d.createElement("h1");
             title.textContent = "IMAGE DATA";
-            Object.assign(title.style, {
-                margin: "0",
-                fontSize: "16px",
-                fontWeight: "700",
-                color: "#fff",
-                display: "flex",
-                alignItems: "center"
-            });
+            Object.assign(title.style, { margin: "0", fontSize: "16px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center" });
             left.appendChild(title);
             b.appendChild(left);
 
@@ -206,7 +145,6 @@
             btns.style.gap = "8px";
             btns.style.height = "100%";
 
-            // Toggle badges
             const toggleGroup = d.createElement("div");
             toggleGroup.style.display = "flex";
             toggleGroup.style.alignItems = "center";
@@ -243,23 +181,9 @@
             toggleGroup.append(label, toggleBtn);
             btns.append(toggleGroup);
 
-            // Close button
             const x = d.createElement("div");
             x.textContent = "×";
-            Object.assign(x.style, {
-                cursor: "pointer",
-                fontSize: "20px",
-                width: "32px",
-                height: "32px",
-                background: "#e74c3c",
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                borderRadius: "50%",
-                marginTop: "2px"
-            });
+            Object.assign(x.style, { cursor: "pointer", fontSize: "20px", width: "32px", height: "32px", background: "#e74c3c", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", borderRadius: "50%", marginTop: "2px" });
             x.title = "Close";
             x.setAttribute("data-drag-ignore", "1");
             x.onclick = e => { e.stopPropagation(); o.remove(); localStorage.removeItem(LSK); window._imgData.cleanup(); };
@@ -272,42 +196,19 @@
         return b;
     };
 
-    // Content container
     const txt = d.createElement("div");
     Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#ffffff", position: "relative" });
 
-    // Back to top button
     const backTop = d.createElement("div");
     backTop.textContent = "↑";
-    Object.assign(backTop.style, {
-        position: "absolute",
-        bottom: "10px",
-        right: "10px",
-        width: "32px",
-        height: "32px",
-        borderRadius: "50%",
-        background: "#3498db",
-        color: "#fff",
-        display: "none",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-        zIndex: 2147483648,
-        userSelect: "none",
-        fontSize: "18px",
-        textAlign: "center",
-        lineHeight: "32px"
-    });
+    Object.assign(backTop.style, { position: "absolute", bottom: "10px", right: "10px", width: "32px", height: "32px", borderRadius: "50%", background: "#3498db", color: "#fff", display: "none", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", zIndex: 2147483648, userSelect: "none", fontSize: "18px", textAlign: "center", lineHeight: "32px" });
     backTop.title = "Back to Top";
     backTop.onclick = () => { txt.scrollTo({ top: 0, behavior: "smooth" }); };
     txt.addEventListener("scroll", () => { backTop.style.display = txt.scrollTop > 0 ? "flex" : "none"; });
 
-    // Append overlay elements
     o.append(mkbar("top"), txt, mkbar("bottom"), backTop);
     d.body.appendChild(o);
 
-    // Populate content
     const autosize = () => {
         try {
             const contentH = txt.scrollHeight, desired = headerH + contentH + footerH, maxH = Math.floor(.9 * innerHeight), minH = 140;
@@ -320,9 +221,7 @@
         txt.innerHTML = items.length ? items.map((it, i) => 
             `<div style="display:flex;padding:8px 0;border-bottom:1px solid #eee;align-items:flex-start">
                 <div style="flex:0 0 ${badgeSize}px;display:flex;align-items:center;justify-content:center;margin-right:8px;">
-                    <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;" style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;line-height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer">
-                        ${i+1}
-                    </a>
+                    <a href="#${it.anchorId}" onclick="document.getElementById('${it.anchorId}').scrollIntoView({behavior:'smooth',block:'center'});return false;" style="display:flex;align-items:center;justify-content:center;background:#FFA500;color:#000;font-weight:700;font-size:14px;border:2px solid #000;width:${badgeSize}px;height:${badgeSize}px;line-height:${badgeSize}px;text-align:center;user-select:none;text-decoration:none;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer">${i+1}</a>
                 </div>
                 <div style="flex:1">
                     <div><strong>Name:</strong> ${it.name}</div>
@@ -338,13 +237,9 @@
     };
     update();
 
-    // Load image sizes asynchronously
     items.forEach(it => {
         fetch(it.url, { method: "HEAD" })
             .then(r => { const cl = r.headers.get("content-length"); it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown"; update(); })
             .catch(() => { it.size = "Error"; update(); });
     });
-
-    // Drag & resize (omitted here for brevity — can be copied from previous working version)
-
 })();
