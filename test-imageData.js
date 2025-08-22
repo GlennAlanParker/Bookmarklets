@@ -384,7 +384,68 @@
         const endDrag = e => { drag = null; d.querySelectorAll("[data-drag-handle]").forEach(b => (b.style.cursor = "grab")); savePos(); };
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
-        d.querySelectorAll("[data-drag-handle]").forEach(b => (b.onpointerdown = e => startDrag(e, b)));
+        d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = e => startDrag(e, b));
 
-    } catch (e) { console.error(e); }
+        // 8 visible resizers with hover glow
+        const resizerDirs = ["n","s","e","w","ne","nw","se","sw"];
+        resizerDirs.forEach(dir => {
+            const h = d.createElement("div");
+            Object.assign(h.style, {
+                position: "absolute",
+                background: "#09f",
+                opacity: "0.85",
+                zIndex: "2147483648",
+                borderRadius: "2px",
+                cursor: dir + "-resize",
+                transition: "box-shadow 0.15s, transform 0.15s"
+            });
+            const sz = 16;
+
+            if (dir.includes("n")) h.style.top = "0";
+            if (dir.includes("s")) h.style.bottom = "0";
+            if (dir.includes("e")) h.style.right = "0";
+            if (dir.includes("w")) h.style.left = "0";
+
+            if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = -sz/2 + "px"; h.style.width = sz + "px"; h.style.height = sz + "px"; }
+            else if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = -sz/2 + "px"; h.style.width = sz + "px"; h.style.height = sz + "px"; }
+            else { h.style.width = sz + "px"; h.style.height = sz + "px"; }
+
+            h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
+            h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
+
+            let startX, startY, startW, startH, startL, startT;
+            h.addEventListener("pointerdown", e => {
+                e.preventDefault();
+                e.stopPropagation();
+                startX = e.clientX;
+                startY = e.clientY;
+                const r = o.getBoundingClientRect();
+                startW = r.width;
+                startH = r.height;
+                startL = r.left;
+                startT = r.top;
+
+                const onMove = me => {
+                    let dx = me.clientX - startX, dy = me.clientY - startY, w=startW, h=startH, l=startL, t=startT;
+                    if(dir.includes("e")) w = Math.max(200, startW + dx);
+                    if(dir.includes("s")) h = Math.max(100, startH + dy);
+                    if(dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
+                    if(dir.includes("n")) { h = Math.max(100, startH - dy); t = startT + dy; }
+                    o.style.width = w + "px";
+                    o.style.height = h + "px";
+                    o.style.left = l + "px";
+                    o.style.top = t + "px";
+                    o.style.right = "auto";
+                };
+                const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); savePos(); };
+                d.addEventListener("pointermove", onMove);
+                d.addEventListener("pointerup", onUp);
+            });
+
+            o.appendChild(h);
+        });
+
+    } catch (e) {
+        console.error(e);
+    }
 })();
