@@ -1,22 +1,25 @@
 (() => {
   const url = "https://raw.githubusercontent.com/GlennAlanParker/Bookmarklets/main/test-showHeadings.js";
 
-  // Add cache-busting query parameter to always get the latest version
-  const fetchUrl = url + "?_=" + Date.now();
-
-  fetch(fetchUrl, { cache: "no-store" })
+  fetch(url + "?_=" + Date.now(), { cache: "no-store" })
     .then(response => response.text())
     .then(js => {
       try {
-        // Evaluate the fetched JavaScript
         eval(js);
 
-        // Ensure all heading level boxes are visible
-        document.querySelectorAll(".heading-level-box").forEach(el => {
-          el.style.display = "block";
-          el.style.visibility = "visible";
-          el.style.opacity = "1";
-        });
+        // Wait until heading boxes exist, then force them visible
+        const selector = ".heading-level-box"; // change if needed
+        const interval = setInterval(() => {
+          const boxes = document.querySelectorAll(selector);
+          if (boxes.length > 0) {
+            boxes.forEach(el => {
+              el.style.display = "block";
+              el.style.visibility = "visible";
+              el.style.opacity = "1";
+            });
+            clearInterval(interval);
+          }
+        }, 100); // check every 100ms
 
       } catch (e) {
         console.error("Eval error:", e);
