@@ -2,14 +2,15 @@
   const url = "https://raw.githubusercontent.com/GlennAlanParker/Bookmarklets/main/test-showHeadings.js";
 
   fetch(url + "?_=" + Date.now(), { cache: "no-store" })
-    .then(response => response.text())
+    .then(r => r.text())
     .then(js => {
       try {
+        // Execute the script
         eval(js);
 
-        // Wait until heading boxes exist, then force them visible
-        const selector = ".heading-level-box"; // change if needed
-        const interval = setInterval(() => {
+        // Wait for heading boxes to appear
+        const selector = ".heading-level-box"; // Replace with actual class if different
+        const observer = new MutationObserver(() => {
           const boxes = document.querySelectorAll(selector);
           if (boxes.length > 0) {
             boxes.forEach(el => {
@@ -17,9 +18,12 @@
               el.style.visibility = "visible";
               el.style.opacity = "1";
             });
-            clearInterval(interval);
+            observer.disconnect(); // Stop observing once done
           }
-        }, 100); // check every 100ms
+        });
+
+        // Observe DOM changes for added nodes
+        observer.observe(document.body, { childList: true, subtree: true });
 
       } catch (e) {
         console.error("Eval error:", e);
