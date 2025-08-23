@@ -1,33 +1,37 @@
 (() => {
-  const url = "https://raw.githubusercontent.com/GlennAlanParker/Bookmarklets/main/test-showHeadings.js";
+  // 1. GitHub raw URL + cache-busting
+  const url = "https://raw.githubusercontent.com/GlennAlanParker/Bookmarklets/main/test-showHeadings.js?_=" + Date.now();
 
-  fetch(url + "?_=" + Date.now(), { cache: "no-store" })
-    .then(r => r.text())
-    .then(js => {
-      try {
-        // Execute the script
-        eval(js);
+  // 2. Inject script dynamically
+  const script = document.createElement("script");
+  script.src = url;
+  script.onload = () => {
+    console.log("Script loaded successfully.");
 
-        // Wait for heading boxes to appear
-        const selector = ".heading-level-box"; // Replace with actual class if different
-        const observer = new MutationObserver(() => {
-          const boxes = document.querySelectorAll(selector);
-          if (boxes.length > 0) {
-            boxes.forEach(el => {
-              el.style.display = "block";
-              el.style.visibility = "visible";
-              el.style.opacity = "1";
-            });
-            observer.disconnect(); // Stop observing once done
-          }
+    // 3. Selector for heading level boxes (update if different)
+    const selector = ".heading-level-box";
+
+    // 4. Use MutationObserver to detect boxes created dynamically
+    const observer = new MutationObserver(() => {
+      const boxes = document.querySelectorAll(selector);
+      if (boxes.length > 0) {
+        boxes.forEach(el => {
+          el.style.display = "block";
+          el.style.visibility = "visible";
+          el.style.opacity = "1";
+
+          // Scroll box into view
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
         });
-
-        // Observe DOM changes for added nodes
-        observer.observe(document.body, { childList: true, subtree: true });
-
-      } catch (e) {
-        console.error("Eval error:", e);
+        observer.disconnect(); // Stop observing once boxes are found
       }
-    })
-    .catch(e => console.error("Failed to load script:", e));
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  };
+
+  script.onerror = () => console.error("Failed to load script from GitHub.");
+
+  // 5. Add the script to the page
+  document.body.appendChild(script);
 })();
