@@ -1,5 +1,5 @@
 (function () {
-  var KEY = '__gap_heading_labels_v3';
+  var KEY = '__gap_heading_labels_v4';
   if (window[KEY]) { window[KEY].cleanup(); return; }
 
   var state = { badges: [], headings: [], listeners: [] };
@@ -18,14 +18,14 @@
     console.info('Heading labels removed.');
   };
 
-  // Stronger colors for each heading level
+  // Stronger/darker colors for each heading level
   var colors = {
-    h1: 'rgba(220, 53, 69, 0.9)',   // red
-    h2: 'rgba(255, 140, 0, 0.9)',   // orange
-    h3: 'rgba(40, 167, 69, 0.9)',   // green
-    h4: 'rgba(0, 123, 255, 0.9)',   // blue
-    h5: 'rgba(102, 16, 242, 0.9)',  // purple
-    h6: 'rgba(108, 117, 125, 0.9)'  // gray
+    h1: '#c82333',  // dark red
+    h2: '#e67e22',  // dark orange
+    h3: '#218838',  // dark green
+    h4: '#0056b3',  // dark blue
+    h5: '#6610f2',  // purple
+    h6: '#343a40'   // dark gray
   };
 
   document.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
@@ -39,10 +39,10 @@
     if (comp.position === 'static') h.style.position = 'relative';
 
     var tag = h.tagName.toLowerCase();
-    var color = colors[tag] || 'rgba(0,0,0,0.8)';
+    var color = colors[tag] || '#000';
 
-    // Visible thick outline
-    h.style.outline = '3px solid ' + color;
+    // Darker, thicker outline
+    h.style.outline = '4px solid ' + color;
 
     // Badge
     var span = document.createElement('span');
@@ -56,12 +56,12 @@
     span.style.transform = 'translate(30%,-50%)';
     span.style.background = color;
     span.style.color = '#fff';
-    span.style.fontSize = '0.8rem';
+    span.style.fontSize = '1rem';  // increased size
     span.style.fontWeight = 'bold';
     span.style.fontFamily = 'sans-serif';
-    span.style.padding = '4px 8px';
-    span.style.borderRadius = '4px';
-    span.style.boxShadow = '0 2px 4px rgba(0,0,0,0.25)';
+    span.style.padding = '5px 9px';
+    span.style.borderRadius = '5px';
+    span.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
     span.style.pointerEvents = 'none';
     span.style.zIndex = 2147483647;
 
@@ -76,7 +76,7 @@
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') state.cleanup();
   };
   window.addEventListener('keydown', keyHandler);
-  state.listeners.push({ target: window, event: 'keydown', handler: keyHandler });
+  state.listeners.push({ target:window, event:'keydown', handler:keyHandler });
 
   window[KEY] = state;
   console.info('Heading labels applied. Press Esc or Ctrl+Shift+H to remove.');
