@@ -1,48 +1,90 @@
-javascript:(() => {
-  // Remove existing labels if already added
-  document.querySelectorAll('.heading-label').forEach(el => el.remove());
+(() => {
+  const KEY = '__gap_heading_labels_v1';
+  // If already active, remove everything (toggle off)
+  if (window[KEY]) { window[KEY].cleanup(); return; }
 
-  // Style injected only once
-  if (!document.getElementById('heading-label-style')) {
-    const style = document.createElement('style');
-    style.id = 'heading-label-style';
-    style.textContent = `
-      .heading-highlight {
-        position: relative;
-        outline: 1px solid rgba(0, 123, 255, 0.5);
-        border-radius: 4px;
-        padding: 2px 4px;
+  const state = { badges: [], headings: [], listeners: [] };
+
+  // Cleanup function (restores original inline position, removes badges + style + listeners)
+  state.cleanup = () => {
+    state.badges.forEach(b => b.remove());
+    state.headings.forEach(h => {
+      h.classList.remove('gap-heading-highlight');
+      if ('gapOriginalInlinePosition' in h.dataset) {
+        h.style.position = h.dataset.gapOriginalInlinePosition;
+        delete h.dataset.gapOriginalInlinePosition;
       }
-      .heading-label {
-        position: absolute;
-        top: -0.8em;
-        right: -0.5em;
-        background: rgba(0, 123, 255, 0.9);
-        color: white;
-        font-size: 0.7em;
-        font-family: monospace;
-        padding: 2px 5px;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        pointer-events: none;
-      }
-    `;
-    document.head.appendChild(style);
-  }
+      delete h.dataset.gapHeadingLabel;
+    });
+    const style = document.getElementById('gap-heading-style-v1');
+    if (style) style.remove();
+    state.listeners.forEach(l => l.target.removeEventListener(l.event, l.handler));
+    delete window[KEY];
+  };
 
-  // Select all headings
-  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-  headings.forEach(heading => {
-    const tag = heading.tagName.toLowerCase();
+  // Inject professional styles
+  const css = `
+    .gap-heading-highlight {
+      outline: 1px solid rgba(0,123,255,0.24);
+      border-radius: 6px;
+      padding: 0.08em 0.3em;
+      transition: box-shadow .12s ease, outline-color .12s ease;
+    }
+    .gap-heading-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      transform: translate(25%, -50%);
+      background: rgba(0,123,255,0.95);
+      color: #fff;
+      font-size: 0.65rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+      padding: 3px 6px;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+      pointer-events: none;
+      z-index: 9999;
+    }
+    @media (max-width:520px) {
+      .gap-heading-badge { font-size: 0.6rem; padding: 2px 5px; }
+    }
+  `;
+  const styleEl = document.createElement('style');
+  styleEl.id = 'gap-heading-style-v1';
+  styleEl.textContent = css;
+  (document.head || document.documentElement).appendChild(styleEl);
 
-    // Add highlight
-    heading.classList.add('heading-highlight');
+  // Find headings and attach badges
+  document.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
+    if (h.dataset.gapHeadingLabel) return; // already labeled
+    state.headings.push(h);
 
-    // Create floating label
-    const label = document.createElement('span');
-    label.className = 'heading-label';
-    label.textContent = tag;
-    heading.style.position = 'relative';
-    heading.appendChild(label);
+    // Preserve any inline position value so we can restore it
+    h.dataset.gapOriginalInlinePosition = h.style.position || '';
+
+    // Ensure the heading is positioned so the absolute badge is anchored correctly
+    const comp = window.getComputedStyle(h);
+    if (comp.position === 'static') h.style.position = 'relative';
+
+    h.classList.add('gap-heading-highlight');
+    const span = document.createElement('span');
+    span.className = 'gap-heading-badge';
+    span.setAttribute('aria-hidden', 'true');
+    span.textContent = h.tagName.toLowerCase();
+    h.appendChild(span);
+
+    state.badges.push(span);
+    h.dataset.gapHeadingLabel = '1';
   });
+
+  // Keyboard: ESC or Ctrl+Shift+H will remove labels (toggle off)
+  const keyHandler = (e) => {
+    if (e.key === 'Escape') state.cleanup();
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') state.cleanup();
+  };
+  window.addEventListener('keydown', keyHandler);
+  state.listeners.push({ target: window, event: 'keydown', handler: keyHandler });
+
+  // Export state so re-running toggles off
+  window[KEY] = state;
 })();
