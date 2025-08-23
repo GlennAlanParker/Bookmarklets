@@ -1,0 +1,48 @@
+javascript:(() => {
+  // Remove existing labels if already added
+  document.querySelectorAll('.heading-label').forEach(el => el.remove());
+
+  // Style injected only once
+  if (!document.getElementById('heading-label-style')) {
+    const style = document.createElement('style');
+    style.id = 'heading-label-style';
+    style.textContent = `
+      .heading-highlight {
+        position: relative;
+        outline: 1px solid rgba(0, 123, 255, 0.5);
+        border-radius: 4px;
+        padding: 2px 4px;
+      }
+      .heading-label {
+        position: absolute;
+        top: -0.8em;
+        right: -0.5em;
+        background: rgba(0, 123, 255, 0.9);
+        color: white;
+        font-size: 0.7em;
+        font-family: monospace;
+        padding: 2px 5px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Select all headings
+  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  headings.forEach(heading => {
+    const tag = heading.tagName.toLowerCase();
+
+    // Add highlight
+    heading.classList.add('heading-highlight');
+
+    // Create floating label
+    const label = document.createElement('span');
+    label.className = 'heading-label';
+    label.textContent = tag;
+    heading.style.position = 'relative';
+    heading.appendChild(label);
+  });
+})();
