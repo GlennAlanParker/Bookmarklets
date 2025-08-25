@@ -219,7 +219,56 @@
         };
 
         const txt = d.createElement("div");
-        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff" });
+        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
+
+        // Scroll to top button
+        const scrollTopBtn = d.createElement("div");
+        scrollTopBtn.textContent = "↑";
+        Object.assign(scrollTopBtn.style, {
+            position: "absolute",
+            bottom: "10px",
+            right: "10px",
+            width: "30px",
+            height: "30px",
+            background: "#34495e",
+            color: "#fff",
+            display: "none",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "16px",
+            fontWeight: "bold",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            zIndex: "10",
+            transition: "all 0.2s ease",
+            userSelect: "none"
+        });
+
+        scrollTopBtn.addEventListener("mouseenter", () => {
+            scrollTopBtn.style.background = "#2c3e50";
+            scrollTopBtn.style.transform = "scale(1.1)";
+        });
+
+        scrollTopBtn.addEventListener("mouseleave", () => {
+            scrollTopBtn.style.background = "#34495e";
+            scrollTopBtn.style.transform = "scale(1)";
+        });
+
+        scrollTopBtn.addEventListener("click", () => {
+            txt.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        txt.appendChild(scrollTopBtn);
+
+        // Show/hide scroll to top button based on scroll position
+        txt.addEventListener("scroll", () => {
+            if (txt.scrollTop > 0) {
+                scrollTopBtn.style.display = "flex";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        });
 
         const autosize = () => {
             const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight)));
