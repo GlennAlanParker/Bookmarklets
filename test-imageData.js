@@ -240,7 +240,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "15px";
+                badgeDiv.style.marginRight = "10px";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
