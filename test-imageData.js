@@ -1,7 +1,6 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v6";
-
+        const LSK = "imgDataOverlay_v5";
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
         const d = document;
@@ -31,13 +30,14 @@
             return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
         });
 
-        // Create badges
+        // Create badge with draggable handle
         const createBadge = (img, index) => {
             const a = d.createElement("a");
             a.href = img.src;
             a.target = "_blank";
             a.rel = "noopener noreferrer";
             a.textContent = index;
+
             Object.assign(a.style, {
                 position: "absolute",
                 display: "flex",
@@ -53,27 +53,38 @@
                 lineHeight: badgeSize + "px",
                 textAlign: "center",
                 userSelect: "none",
-                cursor: "grab",
                 borderRadius: "4px",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                zIndex: 2147483648
+                zIndex: 2147483648,
+                cursor: "default"
             });
 
-            // Make badges draggable
-            let drag = null;
-            a.addEventListener("pointerdown", e => {
-                e.preventDefault();
-                drag = { dx: e.clientX - a.getBoundingClientRect().left, dy: e.clientY - a.getBoundingClientRect().top };
-                a.setPointerCapture(e.pointerId);
+            // Draggable handle
+            const handle = d.createElement("div");
+            Object.assign(handle.style, {
+                position: "absolute",
+                top: "0",
+                left: "0",
+                width: "100%",
+                height: "100%",
+                cursor: "grab",
             });
-            a.addEventListener("pointermove", e => {
+
+            let drag = null;
+            handle.addEventListener("pointerdown", e => {
+                e.preventDefault(); e.stopPropagation();
+                drag = { dx: e.clientX - a.getBoundingClientRect().left, dy: e.clientY - a.getBoundingClientRect().top };
+                handle.setPointerCapture(e.pointerId);
+            });
+            handle.addEventListener("pointermove", e => {
                 if (!drag) return;
                 a.style.left = (e.clientX - drag.dx + scrollX) + "px";
                 a.style.top = (e.clientY - drag.dy + scrollY) + "px";
             });
-            a.addEventListener("pointerup", e => { drag = null; a.releasePointerCapture(e.pointerId); });
-            a.addEventListener("pointercancel", e => { drag = null; a.releasePointerCapture(e.pointerId); });
+            handle.addEventListener("pointerup", e => { drag = null; handle.releasePointerCapture(e.pointerId); });
+            handle.addEventListener("pointercancel", e => { drag = null; handle.releasePointerCapture(e.pointerId); });
 
+            a.appendChild(handle);
             d.body.appendChild(a);
             badges.push({ img, box: a });
         };
@@ -97,28 +108,25 @@
             n++;
         }
 
-        // Update badge positions
         const updateBadgePositions = () => {
             const placed = [];
             for (const b of badges) {
                 try {
                     const r = b.img.getBoundingClientRect();
-                    if (!b.box.dragging) { // Only auto-position if not manually dragged
-                        let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + scrollX - 8)));
-                        let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + scrollY - 8)));
-                        for (const p of placed) {
-                            if (Math.abs(p.x - x) < badgeSize + 8 && !((y + badgeSize + vGap < p.y) || y > p.y + p.bh + vGap)) {
-                                y = p.y + p.bh + vGap;
-                                y = Math.min(y, d.documentElement.scrollHeight - badgeSize - margin);
-                            }
+                    let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + scrollX - 8)));
+                    let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + scrollY - 8)));
+                    for (const p of placed) {
+                        if (Math.abs(p.x - x) < badgeSize + 8 && !((y + badgeSize + vGap < p.y) || y > p.y + p.bh + vGap)) {
+                            y = p.y + p.bh + vGap;
+                            y = Math.min(y, d.documentElement.scrollHeight - badgeSize - margin);
                         }
-                        Object.assign(b.box.style, {
-                            left: x + "px",
-                            top: y + "px",
-                            display: window._imgData.badgesVisible ? "flex" : "none"
-                        });
-                        placed.push({ x, y, bw: badgeSize, bh: badgeSize });
                     }
+                    Object.assign(b.box.style, {
+                        left: x + "px",
+                        top: y + "px",
+                        display: window._imgData.badgesVisible ? "flex" : "none"
+                    });
+                    placed.push({ x, y, bw: badgeSize, bh: badgeSize });
                 } catch {}
             }
         };
@@ -156,7 +164,6 @@
 
         const headerH = 56, footerH = 28;
 
-        // Top/Bottom bars
         const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
@@ -173,10 +180,10 @@
             });
 
             if (pos === "top") {
-                // Title left-aligned + 20px margin
+                // Title
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
-                Object.assign(title.style, { margin: "0 0 0 20px", fontSize: "18px", color: "#fff", display: "flex", alignItems: "center" });
+                Object.assign(title.style, { margin: 0, flex: "1 0 auto", display: "flex", alignItems: "center", justifyContent: "flex-start", marginLeft: "20px", color: "#fff", fontSize: "16px" });
                 b.appendChild(title);
 
                 // Buttons container
@@ -209,14 +216,12 @@
                 x.textContent = "×";
                 Object.assign(x.style, {
                     cursor: "pointer",
-                    fontSize: "14px",
-                    padding: "0",
-                    margin: "0",
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "50%",
+                    fontSize: "16px",
+                    width: "24px",
+                    height: "24px",
                     background: "#e74c3c",
                     color: "#fff",
+                    borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -256,7 +261,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px"; // <-- requested padding
+                badgeDiv.style.marginRight = "10px"; // 10px padding
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
@@ -333,7 +338,12 @@
             drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
             e.preventDefault();
         };
-        const onDrag = (e) => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
+        const onDrag = (e) => {
+            if (!drag) return;
+            o.style.left = (e.clientX - drag.dx) + "px";
+            o.style.top = (e.clientY - drag.dy) + "px";
+            o.style.right = "auto";
+        };
         const endDrag = () => { drag = null; };
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
@@ -359,10 +369,8 @@
             if (dir.includes("w")) h.style.left = "0";
             if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
             if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
-
             h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
             h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
-
             h.addEventListener("pointerdown", e => {
                 e.preventDefault(); e.stopPropagation();
                 let startX = e.clientX, startY = e.clientY;
@@ -375,13 +383,16 @@
                     if (dir.includes("s")) hH = Math.max(100, startH + dy);
                     if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
                     if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = startT + dy; }
-                    o.style.width = w + "px"; o.style.height = hH + "px"; o.style.left = l + "px"; o.style.top = t + "px"; o.style.right = "auto";
+                    o.style.width = w + "px";
+                    o.style.height = hH + "px";
+                    o.style.left = l + "px";
+                    o.style.top = t + "px";
+                    o.style.right = "auto";
                 };
                 const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
                 d.addEventListener("pointermove", onMove);
                 d.addEventListener("pointerup", onUp);
             });
-
             o.appendChild(h);
         });
 
