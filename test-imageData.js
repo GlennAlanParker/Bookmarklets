@@ -153,18 +153,17 @@
             });
 
             if (pos === "top") {
-                // Title
+                // Title (left-aligned with 20px margin)
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
                 Object.assign(title.style, {
                     margin: 0,
-                    flex: 1,
+                    color: "#fff",
+                    fontSize: "16px",
+                    marginLeft: "20px",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "flex-start", // left-aligned
-                    color: "#fff",
-                    fontSize: "20px",            // increased size
-                    marginLeft: "20px"           // 20px left margin
+                    justifyContent: "flex-start"
                 });
                 b.appendChild(title);
 
@@ -176,29 +175,24 @@
 
                 // Toggle badges
                 const toggleGroup = d.createElement("div");
-                Object.assign(toggleGroup.style, {
-                    display: "flex",
-                    alignItems: "center",
-                    background: "#95a5a6",
-                    borderRadius: "6px",
-                    padding: "2px 6px",
-                    cursor: "pointer",
-                    userSelect: "none"
-                });
+                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
                 const label = d.createElement("span");
                 label.textContent = "Toggle Badges";
                 Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
                 toggleGroup.appendChild(label);
+
                 const toggleBtn = d.createElement("button");
                 toggleBtn.textContent = "🔢";
                 toggleBtn.title = "Toggle Number Badges";
                 Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
                 toggleGroup.appendChild(toggleBtn);
+
                 toggleGroup.onclick = e => {
                     e.stopPropagation();
                     window._imgData.badgesVisible = !window._imgData.badgesVisible;
                     badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
                 };
+
                 btns.appendChild(toggleGroup);
 
                 // Close button
@@ -253,7 +247,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px"; // Change #2 applied
+                badgeDiv.style.marginRight = "10px"; // <-- requested change
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
@@ -282,19 +276,21 @@
                     const el = d.getElementById(it.anchorId);
                     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                 });
+
                 badgeDiv.appendChild(link);
                 entry.appendChild(badgeDiv);
 
                 const infoDiv = d.createElement("div");
                 infoDiv.style.flex = "1";
-                infoDiv.innerHTML = `<div><strong>Name:</strong> ${it.name}</div>
-                                     <div><strong>Dimensions:</strong> ${it.dim}</div>
-                                     <div><strong>Size:</strong> ${it.size}</div>
-                                     <div><strong>Alt:</strong> ${it.alt}</div>
-                                     <div><strong>Caption:</strong> ${it.caption}</div>
-                                     <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>`;
+                infoDiv.innerHTML = `
+                    <div><strong>Name:</strong> ${it.name}</div>
+                    <div><strong>Dimensions:</strong> ${it.dim}</div>
+                    <div><strong>Size:</strong> ${it.size}</div>
+                    <div><strong>Alt:</strong> ${it.alt}</div>
+                    <div><strong>Caption:</strong> ${it.caption}</div>
+                    <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
+                `;
                 entry.appendChild(infoDiv);
-
                 txt.appendChild(entry);
 
                 const hr = d.createElement("hr");
@@ -320,18 +316,34 @@
 
         setTimeout(() => { updateBadgePositions(); autosize(); }, 150);
 
-        // Drag & Resizers (unchanged)
+        // Drag logic
         let drag = null;
-        const startDrag = (e) => { if (e.target.closest("[data-drag-ignore]")) return; const r = o.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; e.preventDefault(); };
+        const startDrag = (e) => {
+            if (e.target.closest("[data-drag-ignore]")) return;
+            const r = o.getBoundingClientRect();
+            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+            e.preventDefault();
+        };
         const onDrag = (e) => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
         const endDrag = () => { drag = null; };
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
+        // Resizers (same as before)
         ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
             const h = d.createElement("div");
-            Object.assign(h.style, { position: "absolute", width: "8px", height: "8px", background: "#09f", opacity: "0.85", zIndex: "2147483648", borderRadius: "2px", cursor: dir + "-resize", transition: "box-shadow 0.15s, transform 0.15s" });
+            Object.assign(h.style, {
+                position: "absolute",
+                width: "8px",
+                height: "8px",
+                background: "#09f",
+                opacity: "0.85",
+                zIndex: "2147483648",
+                borderRadius: "2px",
+                cursor: dir + "-resize",
+                transition: "box-shadow 0.15s, transform 0.15s"
+            });
             if (dir.includes("n")) h.style.top = "0";
             if (dir.includes("s")) h.style.bottom = "0";
             if (dir.includes("e")) h.style.right = "0";
