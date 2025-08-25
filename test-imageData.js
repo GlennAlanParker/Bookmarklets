@@ -1,6 +1,6 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v9";
+        const LSK = "imgDataOverlay_v10";
 
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
@@ -74,19 +74,19 @@
                 overflow: "hidden"
             });
 
-            // Drag handle (subtle corner)
+            // Drag handle (smaller, bottom-right corner)
             const handle = d.createElement("div");
             Object.assign(handle.style, {
                 position: "absolute",
-                bottom: "0px",
-                right: "0px",
-                width: "8px",
-                height: "8px",
+                bottom: "1px",
+                right: "1px",
+                width: "6px",
+                height: "6px",
                 background: "#09f",
                 borderRadius: "50%",
                 cursor: "grab",
                 zIndex: 2147483649,
-                boxShadow: "0 0 3px rgba(0,0,0,0.6)"
+                boxShadow: "0 0 2px rgba(0,0,0,0.6)"
             });
 
             let drag = null, moved = false;
@@ -147,38 +147,109 @@
             n++;
         }
 
-        const updateBadgePositions = () => {
-            const placed = [];
-            for (const b of badges) {
-                try {
-                    const r = b.img.getBoundingClientRect();
-                    let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + scrollX - 8)));
-                    let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + scrollY - 8)));
-                    for (const p of placed) {
-                        if (Math.abs(p.x - x) < badgeSize + 8 && !((y + badgeSize + vGap < p.y) || y > p.y + p.bh + vGap)) {
-                            y = p.y + p.bh + vGap;
-                            y = Math.min(y, d.documentElement.scrollHeight - badgeSize - margin);
-                        }
-                    }
-                    Object.assign(b.box.style, {
-                        left: x + "px",
-                        top: y + "px",
-                        display: window._imgData.badgesVisible ? "flex" : "none"
-                    });
-                    placed.push({ x, y, bw: badgeSize, bh: badgeSize });
-                } catch {}
+        // Overlay
+        const o = d.createElement("div");
+        o.id = "img-data-overlay";
+        window._imgData.overlay = o;
+        Object.assign(o.style, {
+            position: "fixed",
+            top: "10px",
+            right: "0",
+            width: "520px",
+            height: "240px",
+            maxHeight: "90vh",
+            display: "flex",
+            flexDirection: "column",
+            background: "#f8f9fa",
+            font: "12px Arial, sans-serif",
+            zIndex: 2147483647,
+            border: "1px solid #ccc",
+            borderRadius: "10px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            overflow: "hidden"
+        });
+
+        const headerH = 56, footerH = 28;
+
+        const mkbar = pos => {
+            const b = d.createElement("div");
+            Object.assign(b.style, {
+                height: pos === "top" ? headerH + "px" : footerH + "px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: pos === "top" ? "space-between" : "flex-end",
+                padding: "6px 10px",
+                background: "#34495e",
+                color: "#fff",
+                fontWeight: 700,
+                cursor: "grab",
+                userSelect: "none"
+            });
+
+            if (pos === "top") {
+                const title = d.createElement("h1");
+                title.textContent = "Image Data";
+                Object.assign(title.style, { margin: 0, flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", color: "#fff", fontSize: "16px", paddingLeft: "20px" });
+                b.appendChild(title);
+
+                // Buttons container
+                const btns = d.createElement("div");
+                btns.style.display = "flex";
+                btns.style.alignItems = "center";
+                btns.style.gap = "8px";
+
+                // Toggle badges
+                const toggleGroup = d.createElement("div");
+                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
+                const label = d.createElement("span");
+                label.textContent = "Toggle Badges";
+                Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
+                toggleGroup.appendChild(label);
+                const toggleBtn = d.createElement("button");
+                toggleBtn.textContent = "🔢";
+                toggleBtn.title = "Toggle Number Badges";
+                Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
+                toggleGroup.appendChild(toggleBtn);
+                toggleGroup.onclick = e => {
+                    e.stopPropagation();
+                    window._imgData.badgesVisible = !window._imgData.badgesVisible;
+                    badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
+                };
+                btns.appendChild(toggleGroup);
+
+                // Close button
+                const x = d.createElement("div");
+                x.textContent = "×";
+                Object.assign(x.style, {
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                    background: "#e74c3c",
+                    color: "#fff"
+                });
+                x.title = "Close";
+                x.setAttribute("data-drag-ignore", "1");
+                x.onclick = e => { e.stopPropagation(); o.remove(); window._imgData.cleanup(); };
+                btns.appendChild(x);
+
+                b.appendChild(btns);
             }
+
+            b.setAttribute("data-drag-handle", "1");
+            return b;
         };
 
-        updateBadgePositions();
-        setTimeout(updateBadgePositions, 80);
-        window._imgData.scrollHandler = updateBadgePositions;
-        window._imgData.resizeHandler = updateBadgePositions;
-        addEventListener("scroll", window._imgData.scrollHandler);
-        addEventListener("resize", window._imgData.resizeHandler);
-        window._imgData.interval = setInterval(updateBadgePositions, 300);
+        const txt = d.createElement("div");
+        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff" });
 
-        console.log("Image Data Overlay v9 loaded with integrated badge drag handles.");
+        o.append(mkbar("top"), txt, mkbar("bottom"));
+        d.body.appendChild(o);
 
+        console.log("Image Data Overlay v10 loaded with working draggable badge handles and overlay.");
     } catch (e) { console.error(e); }
 })();
