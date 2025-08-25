@@ -5,7 +5,7 @@
         const items = [];
         let badgeSize = 26, n = 1, vGap = 6, margin = 6;
 
-        // Cleanup previous overlay if exists
+        // Cleanup previous overlay
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
         window._imgData = {
@@ -25,9 +25,9 @@
 
         // Collect images
         const imgs = [...d.images].filter(img => img.src && !img.src.startsWith("data:") && !img.src.toLowerCase().includes("qrcode") && img.naturalWidth > 0);
-
         if (!imgs.length) return alert("No suitable images found.");
 
+        // Create badges
         const createBadge = (img, index) => {
             const a = d.createElement("a");
             a.href = img.src;
@@ -58,21 +58,14 @@
 
             // Drag logic for badges
             let drag = null;
-            a.onpointerdown = e => {
-                e.preventDefault();
-                drag = { dx: e.clientX - a.offsetLeft, dy: e.clientY - a.offsetTop };
-            };
-            d.addEventListener("pointermove", e => {
-                if (!drag) return;
-                a.style.left = e.clientX - drag.dx + "px";
-                a.style.top = e.clientY - drag.dy + "px";
-            });
+            a.onpointerdown = e => { e.preventDefault(); drag = { dx: e.clientX - a.offsetLeft, dy: e.clientY - a.offsetTop }; };
+            d.addEventListener("pointermove", e => { if (drag) { a.style.left = e.clientX - drag.dx + "px"; a.style.top = e.clientY - drag.dy + "px"; } });
             d.addEventListener("pointerup", () => drag = null);
 
             badges.push({ img, box: a });
         };
 
-        // Collect image data and create badges
+        // Collect image data
         for (const img of imgs) {
             const name = img.src.split("/").pop().split("?")[0] || "";
             if (!name) continue;
@@ -125,7 +118,7 @@
         addEventListener("resize", window._imgData.resizeHandler);
         window._imgData.interval = setInterval(updateBadgePositions, 300);
 
-        // Create overlay
+        // Overlay panel
         const overlay = d.createElement("div");
         overlay.id = "img-data-overlay";
         Object.assign(overlay.style, {
@@ -133,7 +126,7 @@
             top: "10px",
             right: "0",
             width: "520px",
-            height: "240px",
+            height: "350px",
             maxHeight: "90vh",
             display: "flex",
             flexDirection: "column",
@@ -149,7 +142,7 @@
 
         const headerH = 56, footerH = 28;
 
-        // Top bar
+        // Top and bottom bars
         const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
@@ -166,7 +159,6 @@
             });
 
             if (pos === "top") {
-                // Title
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
                 Object.assign(title.style, {
@@ -179,19 +171,16 @@
                 b.appendChild(title);
 
                 // Toggle badges
-                const toggleGroup = d.createElement("div");
-                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", gap: "4px", marginLeft: "20px", cursor: "pointer" });
                 const toggleBtn = d.createElement("button");
                 toggleBtn.textContent = "🔢";
                 toggleBtn.title = "Toggle Number Badges";
-                Object.assign(toggleBtn.style, { fontSize: "14px", cursor: "pointer" });
-                toggleGroup.appendChild(toggleBtn);
-                toggleGroup.onclick = e => {
+                Object.assign(toggleBtn.style, { fontSize: "14px", cursor: "pointer", marginLeft: "20px" });
+                toggleBtn.onclick = e => {
                     e.stopPropagation();
                     window._imgData.badgesVisible = !window._imgData.badgesVisible;
                     badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
                 };
-                b.appendChild(toggleGroup);
+                b.appendChild(toggleBtn);
 
                 // Close button
                 const closeBtn = d.createElement("div");
@@ -212,16 +201,17 @@
                 closeBtn.onclick = e => { e.stopPropagation(); overlay.remove(); window._imgData.cleanup(); };
                 b.appendChild(closeBtn);
             }
-
             b.setAttribute("data-drag-handle", "1");
             return b;
         };
 
-        const txt = d.createElement("div");
-        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff" });
+        const content = d.createElement("div");
+        Object.assign(content.style, { flex: "1", overflow: "auto", padding: "10px", background: "#fff" });
+
+        const footer = mkbar("bottom"); // Footer placeholder
 
         const updateOverlay = () => {
-            txt.innerHTML = "";
+            content.innerHTML = "";
             items.forEach((it, i) => {
                 const entry = d.createElement("div");
                 entry.style.display = "flex";
@@ -268,16 +258,16 @@
                     <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
                 `;
                 entry.appendChild(infoDiv);
-                txt.appendChild(entry);
+                content.appendChild(entry);
 
                 const hr = d.createElement("hr");
                 Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-                txt.appendChild(hr);
+                content.appendChild(hr);
             });
         };
 
         updateOverlay();
-        overlay.append(mkbar("top"), txt);
+        overlay.append(mkbar("top"), content, footer);
         d.body.appendChild(overlay);
 
         // Fetch actual image sizes
@@ -291,8 +281,6 @@
                 .catch(() => { it.size = "Error"; updateOverlay(); });
         });
 
-        // Initial badge placement
         setTimeout(updateBadgePositions, 100);
-
     } catch (e) { console.error(e); }
 })();
