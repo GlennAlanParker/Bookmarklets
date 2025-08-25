@@ -1,7 +1,9 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v1";
+        const LSK = "imgDataOverlay_v5";
+
         if (window._imgData?.cleanup) window._imgData.cleanup();
+
         const d = document;
         const badges = [];
         const items = [];
@@ -133,7 +135,6 @@
 
         const headerH = 56, footerH = 28;
 
-        // Top/Bottom bars
         const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
@@ -148,7 +149,6 @@
                 cursor: "grab",
                 userSelect: "none"
             });
-
             if (pos === "top") {
                 // Title
                 const title = d.createElement("h1");
@@ -156,6 +156,7 @@
                 Object.assign(title.style, {
                     margin: 0,
                     marginLeft: "20px",
+                    flex: "0 0 auto",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "flex-start",
@@ -166,21 +167,11 @@
 
                 // Buttons container
                 const btns = d.createElement("div");
-                btns.style.display = "flex";
-                btns.style.alignItems = "center";
-                btns.style.gap = "8px";
+                Object.assign(btns.style, { display: "flex", alignItems: "center", gap: "8px" });
 
                 // Toggle badges
                 const toggleGroup = d.createElement("div");
-                Object.assign(toggleGroup.style, {
-                    display: "flex",
-                    alignItems: "center",
-                    background: "#95a5a6",
-                    borderRadius: "6px",
-                    padding: "2px 6px",
-                    cursor: "pointer",
-                    userSelect: "none"
-                });
+                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
                 const label = d.createElement("span");
                 label.textContent = "Toggle Badges";
                 Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
@@ -197,18 +188,14 @@
                 };
                 btns.appendChild(toggleGroup);
 
-                // Close button (resized and centered)
+                // Close button (smaller, vertically centered)
                 const x = d.createElement("div");
                 x.textContent = "×";
-                const toggleHeight = toggleGroup.offsetHeight || 28;
-                const closeSize = toggleHeight * 0.8;
                 Object.assign(x.style, {
                     cursor: "pointer",
-                    fontSize: closeSize * 0.6 + "px",
-                    width: closeSize + "px",
-                    height: closeSize + "px",
-                    lineHeight: closeSize + "px",
-                    textAlign: "center",
+                    fontSize: "14px",
+                    width: "32px",
+                    height: "24px",
                     borderRadius: "50%",
                     background: "#e74c3c",
                     color: "#fff",
@@ -216,8 +203,7 @@
                     alignItems: "center",
                     justifyContent: "center",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                    padding: "0",
-                    margin: "0 0 0 12px"
+                    marginLeft: "4px"
                 });
                 x.title = "Close";
                 x.setAttribute("data-drag-ignore", "1");
@@ -226,7 +212,6 @@
 
                 b.appendChild(btns);
             }
-
             b.setAttribute("data-drag-handle", "1");
             return b;
         };
@@ -253,7 +238,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px"; // requested padding
+                badgeDiv.style.marginRight = "10px"; // <-- 10px padding
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
@@ -323,12 +308,7 @@
 
         // Drag logic
         let drag = null;
-        const startDrag = (e) => {
-            if (e.target.closest("[data-drag-ignore]")) return;
-            const r = o.getBoundingClientRect();
-            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-            e.preventDefault();
-        };
+        const startDrag = (e) => { if (e.target.closest("[data-drag-ignore]")) return; const r = o.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; e.preventDefault(); };
         const onDrag = (e) => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
         const endDrag = () => { drag = null; };
         d.addEventListener("pointermove", onDrag);
@@ -357,7 +337,6 @@
             if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
             h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
             h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
-
             h.addEventListener("pointerdown", e => {
                 e.preventDefault(); e.stopPropagation();
                 let startX = e.clientX, startY = e.clientY;
@@ -370,19 +349,15 @@
                     if (dir.includes("s")) hH = Math.max(100, startH + dy);
                     if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
                     if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = startT + dy; }
-                    o.style.width = w + "px";
-                    o.style.height = hH + "px";
-                    o.style.left = l + "px";
-                    o.style.top = t + "px";
-                    o.style.right = "auto";
+                    o.style.width = w + "px"; o.style.height = hH + "px"; o.style.left = l + "px"; o.style.top = t + "px"; o.style.right = "auto";
                 };
                 const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
-                d.addEventListener("pointermove", onMove);
-                d.addEventListener("pointerup", onUp);
+                d.addEventListener("pointermove", onMove); d.addEventListener("pointerup", onUp);
             });
-
             o.appendChild(h);
         });
 
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error(e);
+    }
 })();
