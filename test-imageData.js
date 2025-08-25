@@ -9,9 +9,249 @@
         const items = [];
         let n = 1, badgeSize = 26, vGap = 6, margin = 6;
 
+        // Create shadow host container
+        const shadowHost = d.createElement('div');
+        shadowHost.id = 'img-data-shadow-host';
+        Object.assign(shadowHost.style, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: '2147483646'
+        });
+        d.body.appendChild(shadowHost);
+
+        // Create shadow root
+        const shadow = shadowHost.attachShadow({ mode: 'open' });
+
+        // Inject CSS into shadow DOM
+        const style = d.createElement('style');
+        style.textContent = `
+            :host {
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 2147483646;
+            }
+            
+            .badge {
+                position: absolute;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #FFA500;
+                color: #000;
+                font-weight: 700;
+                font-size: 14px;
+                border: 2px solid #000;
+                width: 26px;
+                height: 26px;
+                line-height: 26px;
+                text-align: center;
+                user-select: none;
+                cursor: pointer;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                z-index: 2147483648;
+                pointer-events: auto;
+                text-decoration: none;
+            }
+            
+            .overlay {
+                position: fixed;
+                top: 10px;
+                right: 0;
+                width: 520px;
+                height: 240px;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                background: #f8f9fa;
+                font: 12px Arial, sans-serif;
+                z-index: 2147483647;
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                overflow: hidden;
+                pointer-events: auto;
+            }
+            
+            .header-bar, .footer-bar {
+                display: flex;
+                align-items: center;
+                padding: 6px 10px;
+                background: #34495e;
+                color: #fff;
+                font-weight: 700;
+                cursor: grab;
+                user-select: none;
+            }
+            
+            .header-bar {
+                height: 56px;
+                justify-content: space-between;
+            }
+            
+            .footer-bar {
+                height: 28px;
+                justify-content: flex-end;
+            }
+            
+            .title {
+                margin: 0;
+                color: #fff;
+                font-size: 16px;
+                text-align: left;
+            }
+            
+            .buttons {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .toggle-group {
+                display: flex;
+                align-items: center;
+                background: #95a5a6;
+                border-radius: 6px;
+                padding: 2px 6px;
+                cursor: pointer;
+                user-select: none;
+                height: 32px;
+            }
+            
+            .toggle-label {
+                font-size: 12px;
+                margin-right: 6px;
+            }
+            
+            .toggle-btn {
+                border: none;
+                background: transparent;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            
+            .close-btn {
+                cursor: pointer;
+                font-size: 16px;
+                padding: 0;
+                margin: 0 0 0 12px;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                background: #e74c3c;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+            
+            .content {
+                padding: 10px;
+                overflow: auto;
+                flex: 1;
+                background: #fff;
+            }
+            
+            .entry {
+                display: flex;
+                align-items: flex-start;
+                padding: 4px 0;
+            }
+            
+            .badge-container {
+                flex: 0 0 26px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 10px;
+            }
+            
+            .entry-badge {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #FFA500;
+                color: #000;
+                font-weight: 700;
+                font-size: 14px;
+                border: 2px solid #000;
+                width: 26px;
+                height: 26px;
+                line-height: 26px;
+                text-align: center;
+                user-select: none;
+                text-decoration: none;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                cursor: pointer;
+            }
+            
+            .info {
+                flex: 1;
+            }
+            
+            .info div {
+                margin-bottom: 2px;
+            }
+            
+            .info strong {
+                font-weight: bold;
+            }
+            
+            .info a {
+                color: #0066cc;
+                text-decoration: underline;
+            }
+            
+            .separator {
+                margin: 4px 0;
+                border: none;
+                border-top: 1px solid #ccc;
+            }
+            
+            .resizer {
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background: #09f;
+                opacity: 0.85;
+                z-index: 2147483648;
+                border-radius: 2px;
+                transition: box-shadow 0.15s, transform 0.15s;
+            }
+            
+            .resizer:hover {
+                box-shadow: 0 0 8px 2px rgba(0,150,255,0.9);
+                transform: scale(1.2);
+            }
+            
+            .resizer-n { top: 0; left: 50%; margin-left: -4px; cursor: n-resize; }
+            .resizer-s { bottom: 0; left: 50%; margin-left: -4px; cursor: s-resize; }
+            .resizer-e { right: 0; top: 50%; margin-top: -4px; cursor: e-resize; }
+            .resizer-w { left: 0; top: 50%; margin-top: -4px; cursor: w-resize; }
+            .resizer-ne { top: 0; right: 0; cursor: ne-resize; }
+            .resizer-nw { top: 0; left: 0; cursor: nw-resize; }
+            .resizer-se { bottom: 0; right: 0; cursor: se-resize; }
+            .resizer-sw { bottom: 0; left: 0; cursor: sw-resize; }
+        `;
+        shadow.appendChild(style);
+
         window._imgData = {
             badges,
             badgesVisible: true,
+            shadow,
+            shadowHost,
             cleanup() {
                 try {
                     badges.forEach(b => b.box?.remove());
@@ -19,7 +259,7 @@
                     if (this.scrollHandler) removeEventListener("scroll", this.scrollHandler);
                     if (this.resizeHandler) removeEventListener("resize", this.resizeHandler);
                     if (this.interval) clearInterval(this.interval);
-                    if (this.overlay) this.overlay.remove();
+                    if (this.shadowHost) this.shadowHost.remove();
                 } catch (e) { console.warn("Cleanup error", e); }
             }
         };
@@ -37,27 +277,8 @@
             a.target = "_blank";
             a.rel = "noopener noreferrer";
             a.textContent = index;
-            Object.assign(a.style, {
-                position: "absolute",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#FFA500",
-                color: "#000",
-                fontWeight: "700",
-                fontSize: "14px",
-                border: "2px solid #000",
-                width: badgeSize + "px",
-                height: badgeSize + "px",
-                lineHeight: badgeSize + "px",
-                textAlign: "center",
-                userSelect: "none",
-                cursor: "pointer",
-                borderRadius: "4px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                zIndex: 2147483648,
-            });
-            d.body.appendChild(a);
+            a.className = "badge";
+            shadow.appendChild(a);
             badges.push({ img, box: a });
         };
 
@@ -114,112 +335,66 @@
 
         // Overlay
         const o = d.createElement("div");
-        o.id = "img-data-overlay";
-        window._imgData.overlay = o;
-        Object.assign(o.style, {
-            position: "fixed",
-            top: "10px",
-            right: "0",
-            width: "520px",
-            height: "240px",
-            maxHeight: "90vh",
-            display: "flex",
-            flexDirection: "column",
-            background: "#f8f9fa",
-            font: "12px Arial, sans-serif",
-            zIndex: 2147483647,
-            border: "1px solid #ccc",
-            borderRadius: "10px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            overflow: "hidden"
-        });
+        o.className = "overlay";
+        shadow.appendChild(o);
 
         const headerH = 56, footerH = 28;
 
-        // Top/Bottom bars
-        const mkbar = pos => {
-            const b = d.createElement("div");
-            Object.assign(b.style, {
-                height: pos === "top" ? headerH + "px" : footerH + "px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: pos === "top" ? "space-between" : "flex-end",
-                padding: "6px 10px",
-                background: "#34495e",
-                color: "#fff",
-                fontWeight: 700,
-                cursor: "grab",
-                userSelect: "none"
-            });
+        // Header bar
+        const headerBar = d.createElement("div");
+        headerBar.className = "header-bar";
+        headerBar.setAttribute("data-drag-handle", "1");
 
-            if (pos === "top") {
-                // Title
-                const title = d.createElement("h1");
-                title.textContent = "Image Data";
-                Object.assign(title.style, { margin: 0, color: "#fff", fontSize: "16px", textAlign: "left" });
-                b.appendChild(title);
+        // Title
+        const title = d.createElement("h1");
+        title.textContent = "Image Data";
+        title.className = "title";
+        headerBar.appendChild(title);
 
-                // Buttons container
-                const btns = d.createElement("div");
-                btns.style.display = "flex";
-                btns.style.alignItems = "center";
-                btns.style.gap = "8px";
+        // Buttons container
+        const btns = d.createElement("div");
+        btns.className = "buttons";
 
-                // Toggle badges
-                const toggleGroup = d.createElement("div");
-                const toggleHeight = badgeSize + 6;
-                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none", height: toggleHeight + "px" });
-                const label = d.createElement("span");
-                label.textContent = "Toggle Badges";
-                Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
-                toggleGroup.appendChild(label);
+        // Toggle badges
+        const toggleGroup = d.createElement("div");
+        toggleGroup.className = "toggle-group";
+        const label = d.createElement("span");
+        label.textContent = "Toggle Badges";
+        label.className = "toggle-label";
+        toggleGroup.appendChild(label);
 
-                const toggleBtn = d.createElement("button");
-                toggleBtn.textContent = "🔢";
-                toggleBtn.title = "Toggle Number Badges";
-                Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
-                toggleGroup.appendChild(toggleBtn);
+        const toggleBtn = d.createElement("button");
+        toggleBtn.textContent = "🔢";
+        toggleBtn.title = "Toggle Number Badges";
+        toggleBtn.className = "toggle-btn";
+        toggleGroup.appendChild(toggleBtn);
 
-                toggleGroup.onclick = e => {
-                    e.stopPropagation();
-                    window._imgData.badgesVisible = !window._imgData.badgesVisible;
-                    badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
-                };
-
-                btns.appendChild(toggleGroup);
-
-                // Close button
-                const x = d.createElement("div");
-                x.textContent = "×";
-                Object.assign(x.style, {
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    padding: "0",
-                    margin: "0 0 0 12px",
-                    borderRadius: "50%",
-                    width: (badgeSize + 6) + "px",
-                    height: (badgeSize + 6) + "px",
-                    background: "#e74c3c",
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
-                });
-                x.title = "Close";
-                x.setAttribute("data-drag-ignore", "1");
-                x.onclick = e => { e.stopPropagation(); o.remove(); window._imgData.cleanup(); };
-                btns.appendChild(x);
-
-                b.appendChild(btns);
-            }
-
-            b.setAttribute("data-drag-handle", "1");
-            return b;
+        toggleGroup.onclick = e => {
+            e.stopPropagation();
+            window._imgData.badgesVisible = !window._imgData.badgesVisible;
+            badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
         };
 
+        btns.appendChild(toggleGroup);
+
+        // Close button
+        const x = d.createElement("div");
+        x.textContent = "×";
+        x.className = "close-btn";
+        x.title = "Close";
+        x.setAttribute("data-drag-ignore", "1");
+        x.onclick = e => { e.stopPropagation(); window._imgData.cleanup(); };
+        btns.appendChild(x);
+
+        headerBar.appendChild(btns);
+
+        // Footer bar
+        const footerBar = d.createElement("div");
+        footerBar.className = "footer-bar";
+        footerBar.setAttribute("data-drag-handle", "1");
+
         const txt = d.createElement("div");
-        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff" });
+        txt.className = "content";
 
         const autosize = () => {
             const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight)));
@@ -231,39 +406,15 @@
             if (!items.length) { txt.textContent = "No images found."; return; }
             items.forEach((it, i) => {
                 const entry = d.createElement("div");
-                entry.style.display = "flex";
-                entry.style.alignItems = "flex-start";
-                entry.style.padding = "4px 0";
+                entry.className = "entry";
 
                 const badgeDiv = d.createElement("div");
-                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
-                badgeDiv.style.display = "flex";
-                badgeDiv.style.alignItems = "center";
-                badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px";
+                badgeDiv.className = "badge-container";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
                 link.textContent = i + 1;
-                Object.assign(link.style, {
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#FFA500",
-                    color: "#000",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    border: "2px solid #000",
-                    width: badgeSize + "px",
-                    height: badgeSize + "px",
-                    lineHeight: badgeSize + "px",
-                    textAlign: "center",
-                    userSelect: "none",
-                    textDecoration: "none",
-                    borderRadius: "4px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                    cursor: "pointer"
-                });
+                link.className = "entry-badge";
                 link.addEventListener("click", e => {
                     e.preventDefault();
                     const el = d.getElementById(it.anchorId);
@@ -274,7 +425,7 @@
                 entry.appendChild(badgeDiv);
 
                 const infoDiv = d.createElement("div");
-                infoDiv.style.flex = "1";
+                infoDiv.className = "info";
                 infoDiv.innerHTML = `
                     <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.name}</a></div>
                     <div><strong>Dimensions:</strong> ${it.dim}</div>
@@ -286,15 +437,16 @@
                 txt.appendChild(entry);
 
                 const hr = d.createElement("hr");
-                Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
+                hr.className = "separator";
                 txt.appendChild(hr);
             });
             autosize();
         };
 
         update();
-        o.append(mkbar("top"), txt, mkbar("bottom"));
-        d.body.appendChild(o);
+        o.appendChild(headerBar);
+        o.appendChild(txt);
+        o.appendChild(footerBar);
 
         items.forEach(it => {
             fetch(it.url, { method: "HEAD" })
@@ -320,30 +472,12 @@
         const endDrag = () => { drag = null; };
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
-        d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
+        shadow.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-        // Resizers (same as before)
+        // Resizers
         ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
             const h = d.createElement("div");
-            Object.assign(h.style, {
-                position: "absolute",
-                width: "8px",
-                height: "8px",
-                background: "#09f",
-                opacity: "0.85",
-                zIndex: "2147483648",
-                borderRadius: "2px",
-                cursor: dir + "-resize",
-                transition: "box-shadow 0.15s, transform 0.15s"
-            });
-            if (dir.includes("n")) h.style.top = "0";
-            if (dir.includes("s")) h.style.bottom = "0";
-            if (dir.includes("e")) h.style.right = "0";
-            if (dir.includes("w")) h.style.left = "0";
-            if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
-            if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
-            h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
-            h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
+            h.className = `resizer resizer-${dir}`;
 
             h.addEventListener("pointerdown", e => {
                 e.preventDefault(); e.stopPropagation();
