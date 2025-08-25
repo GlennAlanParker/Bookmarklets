@@ -276,12 +276,11 @@
                 const infoDiv = d.createElement("div");
                 infoDiv.style.flex = "1";
                 infoDiv.innerHTML = `
-                    <div><strong>Name:</strong> ${it.name}</div>
+                    <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.name}</a></div>
                     <div><strong>Dimensions:</strong> ${it.dim}</div>
                     <div><strong>Size:</strong> ${it.size}</div>
                     <div><strong>Alt:</strong> ${it.alt}</div>
                     <div><strong>Caption:</strong> ${it.caption}</div>
-                    <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
                 `;
                 entry.appendChild(infoDiv);
                 txt.appendChild(entry);
