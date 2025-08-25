@@ -21,6 +21,7 @@ javascript:(() => {
       }
     };
 
+    // --- Styles ---
     const styleEl = d.createElement("style");
     styleEl.textContent = `
       .imgData-overlay {
@@ -29,8 +30,8 @@ javascript:(() => {
         right: 0;
         bottom: 0;
         width: 320px;
-        background: rgba(0, 0, 0, 0.85);
-        color: white;
+        background: rgba(0, 0, 0, 0.9);
+        color: #fff;
         font-family: Arial, sans-serif;
         font-size: 12px;
         overflow-y: auto;
@@ -40,21 +41,37 @@ javascript:(() => {
       }
       .imgData-header {
         display: flex;
-        align-items: center;        /* ensures vertical centering */
+        align-items: center;         /* vertical centering */
+        justify-content: space-between;
         padding: 8px;
         border-bottom: 1px solid #666;
+        background: #222;
       }
       .imgData-header h1 {
-        flex: 1;
-        font-size: 22px;            /* Change #1: larger title */
+        font-size: 22px;             /* Change #1 */
         margin: 0;
-        margin-left: 20px;          /* Change #1: left margin */
+        margin-left: 20px;           /* Change #1 */
+        flex: 1;
         text-align: left;
+      }
+      .imgData-controls {
+        display: flex;
+        gap: 8px;
+      }
+      .imgData-btn {
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #e91e63;
+        color: #fff;
+        user-select: none;
       }
       .imgData-close {
         cursor: pointer;
         font-size: 16px;
-        padding: 0 8px;
+        padding: 0 6px;
+        color: #fff;
       }
       .imgData-body {
         flex: 1;
@@ -70,14 +87,14 @@ javascript:(() => {
         background: #e91e63;
         border-radius: 4px;
         padding: 2px 6px;
-        margin-right: 10px;         /* Change #2: spacing */
+        margin-right: 10px;          /* Change #2 */
         font-weight: bold;
         font-size: 12px;
       }
       .imgData-badge {
         position: absolute;
         background: rgba(233, 30, 99, 0.9);
-        color: white;
+        color: #fff;
         font-size: 12px;
         font-weight: bold;
         border-radius: 4px;
@@ -86,25 +103,30 @@ javascript:(() => {
         pointer-events: none;
       }
       .imgData-footer {
-        padding: 4px 8px;
+        padding: 6px 8px;
         font-size: 11px;
         border-top: 1px solid #666;
         text-align: center;
+        background: #111;
       }
     `;
     d.head.appendChild(styleEl);
     window._imgData.styleEl = styleEl;
 
+    // --- Overlay ---
     const overlay = d.createElement("div");
     overlay.className = "imgData-overlay";
     overlay.innerHTML = `
       <div class="imgData-header">
         <h1>Image Data</h1>
-        <div class="imgData-close">&times;</div>
+        <div class="imgData-controls">
+          <div class="imgData-btn" id="toggleBadges">Toggle Badges</div>
+          <div class="imgData-close">&times;</div>
+        </div>
       </div>
       <div class="imgData-body"></div>
       <div class="imgData-footer">
-        Toggle badges by clicking the pink number squares.
+        Use "Toggle Badges" to show/hide pink markers on images.
       </div>
     `;
     d.body.appendChild(overlay);
@@ -112,8 +134,18 @@ javascript:(() => {
 
     const body = overlay.querySelector(".imgData-body");
 
+    // Close button
     overlay.querySelector(".imgData-close").onclick = () => window._imgData.cleanup();
 
+    // Toggle badges button
+    overlay.querySelector("#toggleBadges").onclick = () => {
+      window._imgData.badgesVisible = !window._imgData.badgesVisible;
+      window._imgData.badges.forEach(
+        b => (b.box.style.display = window._imgData.badgesVisible ? "block" : "none")
+      );
+    };
+
+    // --- Process images ---
     let idx = 1;
     d.querySelectorAll("img").forEach(img => {
       const rect = img.getBoundingClientRect();
@@ -126,6 +158,7 @@ javascript:(() => {
 
       window._imgData.badges.push({ box: badge, img });
 
+      // Entry with attributes in original order
       const entry = d.createElement("div");
       entry.className = "imgData-entry";
       entry.innerHTML = `
@@ -136,13 +169,8 @@ javascript:(() => {
           <div><strong>Size:</strong> ${img.naturalWidth}×${img.naturalHeight}</div>
         </div>
       `;
-      entry.querySelector(".imgData-num").onclick = () => {
-        window._imgData.badgesVisible = !window._imgData.badgesVisible;
-        window._imgData.badges.forEach(
-          b => (b.box.style.display = window._imgData.badgesVisible ? "block" : "none")
-        );
-      };
       body.appendChild(entry);
+
       idx++;
     });
   } catch (e) {
