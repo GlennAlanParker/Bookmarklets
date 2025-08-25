@@ -201,6 +201,7 @@
                 closeBtn.onclick = e => { e.stopPropagation(); overlay.remove(); window._imgData.cleanup(); };
                 b.appendChild(closeBtn);
             }
+
             b.setAttribute("data-drag-handle", "1");
             return b;
         };
@@ -208,7 +209,7 @@
         const content = d.createElement("div");
         Object.assign(content.style, { flex: "1", overflow: "auto", padding: "10px", background: "#fff" });
 
-        const footer = mkbar("bottom"); // Footer placeholder
+        const footer = mkbar("bottom");
 
         const updateOverlay = () => {
             content.innerHTML = "";
@@ -239,8 +240,8 @@
                     color: "#000",
                     fontWeight: "700",
                     textDecoration: "none",
-                    textAlign: "center",
                     lineHeight: badgeSize + "px",
+                    textAlign: "center",
                     cursor: "pointer"
                 });
                 link.onclick = e => { e.preventDefault(); const el = d.getElementById(it.anchorId); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); };
@@ -270,17 +271,22 @@
         overlay.append(mkbar("top"), content, footer);
         d.body.appendChild(overlay);
 
-        // Fetch actual image sizes
+        // Fetch sizes
         items.forEach(it => {
             fetch(it.url, { method: "HEAD" })
-                .then(r => {
-                    const cl = r.headers.get("content-length");
-                    it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-                    updateOverlay();
-                })
+                .then(r => { const cl = r.headers.get("content-length"); it.size = cl ? (+cl/1024).toFixed(1)+" KB" : "Unknown"; updateOverlay(); })
                 .catch(() => { it.size = "Error"; updateOverlay(); });
         });
 
+        // Drag overlay
+        let dragOverlay = null;
+        overlay.querySelectorAll("[data-drag-handle]").forEach(h => {
+            h.onpointerdown = e => { dragOverlay = { dx: e.clientX - overlay.offsetLeft, dy: e.clientY - overlay.offsetTop }; e.preventDefault(); };
+        });
+        d.addEventListener("pointermove", e => { if (dragOverlay) { overlay.style.left = e.clientX - dragOverlay.dx + "px"; overlay.style.top = e.clientY - dragOverlay.dy + "px"; overlay.style.right = "auto"; } });
+        d.addEventListener("pointerup", () => dragOverlay = null);
+
         setTimeout(updateBadgePositions, 100);
+
     } catch (e) { console.error(e); }
 })();
