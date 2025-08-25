@@ -156,7 +156,7 @@
                 // Title
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
-                Object.assign(title.style, { margin: 0, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "16px" });
+                Object.assign(title.style, { margin: 0, color: "#fff", fontSize: "16px" });
                 b.appendChild(title);
 
                 // Buttons container
@@ -167,7 +167,8 @@
 
                 // Toggle badges
                 const toggleGroup = d.createElement("div");
-                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
+                const toggleHeight = 32;
+                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none", height: toggleHeight + "px" });
                 const label = d.createElement("span");
                 label.textContent = "Toggle Badges";
                 Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
@@ -194,7 +195,7 @@
                     cursor: "pointer",
                     fontSize: "20px",
                     padding: "0",
-                    margin: "-6px 0 -6px 12px",
+                    margin: "0 0 0 12px",
                     borderRadius: "50%",
                     width: "32px",
                     height: "32px",
