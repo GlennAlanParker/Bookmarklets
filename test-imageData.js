@@ -1,6 +1,6 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v1";
+        const LSK = "imgDataOverlay_v4";
 
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
@@ -240,7 +240,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px";
+                badgeDiv.style.marginRight = "15px";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
