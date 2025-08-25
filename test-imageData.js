@@ -51,6 +51,9 @@
                 z-index: 2147483648 !important;
                 text-decoration: none !important;
                 font-family: Arial, sans-serif !important;
+                pointer-events: auto !important;
+                visibility: visible !important;
+                opacity: 1 !important;
             }
         `;
         d.head.appendChild(badgeStyle);
