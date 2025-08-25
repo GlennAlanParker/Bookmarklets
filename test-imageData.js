@@ -236,11 +236,11 @@
                 entry.style.padding = "4px 0";
 
                 const badgeDiv = d.createElement("div");
-                badgeDiv.style.flex = `0 0 ${badgeSize + 10}px`; // Increased flex basis to include spacing
+                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
-                badgeDiv.style.justifyContent = "flex-start"; // Changed to flex-start
-                badgeDiv.style.marginRight = "0px"; // Reset margin
+                badgeDiv.style.justifyContent = "center";
+                badgeDiv.style.paddingRight = "10px"; // Add 10px padding to the right
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
