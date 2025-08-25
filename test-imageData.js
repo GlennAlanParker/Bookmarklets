@@ -1,6 +1,6 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v7";
+        const LSK = "imgDataOverlay_v9";
 
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
@@ -31,7 +31,6 @@
             return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
         });
 
-        // Create draggable numbered badge with visible corner handle
         const createBadge = (img, index) => {
             const wrapper = d.createElement("div");
             Object.assign(wrapper.style, {
@@ -41,6 +40,10 @@
                 width: badgeSize + "px",
                 height: badgeSize + "px",
                 zIndex: 2147483648,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "default",
             });
 
             // Badge number (clickable)
@@ -67,16 +70,11 @@
                 borderRadius: "4px",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                 cursor: "pointer",
-                position: "relative"
+                position: "relative",
+                overflow: "hidden"
             });
 
-            a.addEventListener("click", e => {
-                e.preventDefault();
-                const el = d.getElementById(img.id);
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-            });
-
-            // Small visible corner drag handle
+            // Drag handle (subtle corner)
             const handle = d.createElement("div");
             Object.assign(handle.style, {
                 position: "absolute",
@@ -85,24 +83,44 @@
                 width: "8px",
                 height: "8px",
                 background: "#09f",
-                borderRadius: "2px",
+                borderRadius: "50%",
                 cursor: "grab",
                 zIndex: 2147483649,
+                boxShadow: "0 0 3px rgba(0,0,0,0.6)"
             });
 
-            let drag = null;
+            let drag = null, moved = false;
+
             handle.addEventListener("pointerdown", e => {
                 e.stopPropagation(); e.preventDefault();
                 drag = { dx: e.clientX - wrapper.getBoundingClientRect().left, dy: e.clientY - wrapper.getBoundingClientRect().top };
+                moved = false;
                 handle.setPointerCapture(e.pointerId);
             });
+
             handle.addEventListener("pointermove", e => {
                 if (!drag) return;
-                wrapper.style.left = (e.clientX - drag.dx + scrollX) + "px";
-                wrapper.style.top = (e.clientY - drag.dy + scrollY) + "px";
+                const newLeft = e.clientX - drag.dx + scrollX;
+                const newTop = e.clientY - drag.dy + scrollY;
+                wrapper.style.left = newLeft + "px";
+                wrapper.style.top = newTop + "px";
+                moved = true;
             });
+
             handle.addEventListener("pointerup", e => { drag = null; handle.releasePointerCapture(e.pointerId); });
             handle.addEventListener("pointercancel", e => { drag = null; handle.releasePointerCapture(e.pointerId); });
+
+            // Prevent click if moved
+            a.addEventListener("click", e => {
+                if (moved) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moved = false;
+                } else {
+                    const el = d.getElementById(img.id);
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            });
 
             wrapper.appendChild(a);
             wrapper.appendChild(handle);
@@ -129,7 +147,6 @@
             n++;
         }
 
-        // Update badge positions
         const updateBadgePositions = () => {
             const placed = [];
             for (const b of badges) {
@@ -161,9 +178,7 @@
         addEventListener("resize", window._imgData.resizeHandler);
         window._imgData.interval = setInterval(updateBadgePositions, 300);
 
-        // --- Overlay, header, toggle badges, close button, and resizers ---
-        // Keep all previous overlay code exactly as before
-        console.log("Image Data Overlay v7 loaded with draggable badge handles.");
+        console.log("Image Data Overlay v9 loaded with integrated badge drag handles.");
 
     } catch (e) { console.error(e); }
 })();
