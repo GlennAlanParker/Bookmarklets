@@ -240,7 +240,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.paddingRight = "10px"; // Add 10px padding to the right
+                badgeDiv.style.paddingRight = "10px";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
