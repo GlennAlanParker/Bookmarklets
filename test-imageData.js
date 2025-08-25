@@ -262,13 +262,17 @@
         txt.appendChild(scrollTopBtn);
 
         // Show/hide scroll to top button based on scroll position
-        txt.addEventListener("scroll", () => {
-            if (txt.scrollTop > 0) {
+        const checkScroll = () => {
+            if (txt.scrollTop > 20) {
                 scrollTopBtn.style.display = "flex";
             } else {
                 scrollTopBtn.style.display = "none";
             }
-        });
+        };
+        
+        txt.addEventListener("scroll", checkScroll);
+        // Also check on content updates
+        setTimeout(checkScroll, 100);
 
         const autosize = () => {
             const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight)));
