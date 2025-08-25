@@ -1,6 +1,6 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v10";
+        const LSK = "imgDataOverlay_v11";
 
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
@@ -31,6 +31,7 @@
             return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
         });
 
+        // Create badges with draggable handle
         const createBadge = (img, index) => {
             const wrapper = d.createElement("div");
             Object.assign(wrapper.style, {
@@ -43,10 +44,8 @@
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: "default",
             });
 
-            // Badge number (clickable)
             const a = d.createElement("a");
             a.href = img.src;
             a.target = "_blank";
@@ -69,12 +68,11 @@
                 textDecoration: "none",
                 borderRadius: "4px",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                cursor: "pointer",
                 position: "relative",
-                overflow: "hidden"
+                overflow: "hidden",
+                cursor: "pointer"
             });
 
-            // Drag handle (smaller, bottom-right corner)
             const handle = d.createElement("div");
             Object.assign(handle.style, {
                 position: "absolute",
@@ -90,36 +88,25 @@
             });
 
             let drag = null, moved = false;
-
             handle.addEventListener("pointerdown", e => {
                 e.stopPropagation(); e.preventDefault();
                 drag = { dx: e.clientX - wrapper.getBoundingClientRect().left, dy: e.clientY - wrapper.getBoundingClientRect().top };
                 moved = false;
                 handle.setPointerCapture(e.pointerId);
             });
-
             handle.addEventListener("pointermove", e => {
                 if (!drag) return;
-                const newLeft = e.clientX - drag.dx + scrollX;
-                const newTop = e.clientY - drag.dy + scrollY;
-                wrapper.style.left = newLeft + "px";
-                wrapper.style.top = newTop + "px";
+                wrapper.style.left = (e.clientX - drag.dx + scrollX) + "px";
+                wrapper.style.top = (e.clientY - drag.dy + scrollY) + "px";
                 moved = true;
             });
-
             handle.addEventListener("pointerup", e => { drag = null; handle.releasePointerCapture(e.pointerId); });
             handle.addEventListener("pointercancel", e => { drag = null; handle.releasePointerCapture(e.pointerId); });
 
-            // Prevent click if moved
             a.addEventListener("click", e => {
-                if (moved) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    moved = false;
-                } else {
-                    const el = d.getElementById(img.id);
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                }
+                if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; return; }
+                const el = d.getElementById(img.id);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
             });
 
             wrapper.appendChild(a);
@@ -128,7 +115,7 @@
             badges.push({ img, box: wrapper });
         };
 
-        // Collect item data
+        // Collect image data
         for (const img of imgs) {
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
@@ -146,6 +133,33 @@
             createBadge(img, n);
             n++;
         }
+
+        const updateBadgePositions = () => {
+            const placed = [];
+            for (const b of badges) {
+                try {
+                    const r = b.img.getBoundingClientRect();
+                    let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + scrollX - 8)));
+                    let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + scrollY - 8)));
+                    for (const p of placed) {
+                        if (Math.abs(p.x - x) < badgeSize + 8 && !((y + badgeSize + vGap < p.y) || y > p.y + p.bh + vGap)) {
+                            y = p.y + p.bh + vGap;
+                            y = Math.min(y, d.documentElement.scrollHeight - badgeSize - margin);
+                        }
+                    }
+                    Object.assign(b.box.style, { left: x + "px", top: y + "px", display: window._imgData.badgesVisible ? "flex" : "none" });
+                    placed.push({ x, y, bw: badgeSize, bh: badgeSize });
+                } catch {}
+            }
+        };
+
+        updateBadgePositions();
+        setTimeout(updateBadgePositions, 80);
+        window._imgData.scrollHandler = updateBadgePositions;
+        window._imgData.resizeHandler = updateBadgePositions;
+        addEventListener("scroll", window._imgData.scrollHandler);
+        addEventListener("resize", window._imgData.resizeHandler);
+        window._imgData.interval = setInterval(updateBadgePositions, 300);
 
         // Overlay
         const o = d.createElement("div");
@@ -192,13 +206,11 @@
                 Object.assign(title.style, { margin: 0, flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", color: "#fff", fontSize: "16px", paddingLeft: "20px" });
                 b.appendChild(title);
 
-                // Buttons container
                 const btns = d.createElement("div");
                 btns.style.display = "flex";
                 btns.style.alignItems = "center";
                 btns.style.gap = "8px";
 
-                // Toggle badges
                 const toggleGroup = d.createElement("div");
                 Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
                 const label = d.createElement("span");
@@ -217,7 +229,6 @@
                 };
                 btns.appendChild(toggleGroup);
 
-                // Close button
                 const x = d.createElement("div");
                 x.textContent = "×";
                 Object.assign(x.style, {
@@ -247,9 +258,81 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff" });
 
+        const updateOverlay = () => {
+            txt.innerHTML = "";
+            if (!items.length) { txt.textContent = "No images found."; return; }
+            items.forEach((it, i) => {
+                const entry = d.createElement("div");
+                entry.style.display = "flex"; entry.style.alignItems = "flex-start"; entry.style.padding = "4px 0";
+
+                const badgeDiv = d.createElement("div");
+                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
+                badgeDiv.style.display = "flex";
+                badgeDiv.style.alignItems = "center";
+                badgeDiv.style.justifyContent = "center";
+                badgeDiv.style.marginRight = "4px";
+
+                const link = d.createElement("a");
+                link.href = `#${it.anchorId}`;
+                link.textContent = i + 1;
+                Object.assign(link.style, {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#FFA500",
+                    color: "#000",
+                    fontWeight: "700",
+                    fontSize: "14px",
+                    border: "2px solid #000",
+                    width: badgeSize + "px",
+                    height: badgeSize + "px",
+                    lineHeight: badgeSize + "px",
+                    textAlign: "center",
+                    userSelect: "none",
+                    textDecoration: "none",
+                    borderRadius: "4px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    cursor: "pointer"
+                });
+                link.addEventListener("click", e => { e.preventDefault(); const el = d.getElementById(it.anchorId); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
+                badgeDiv.appendChild(link);
+                entry.appendChild(badgeDiv);
+
+                const infoDiv = d.createElement("div");
+                infoDiv.style.flex = "1";
+                infoDiv.innerHTML = `
+                    <div><strong>Name:</strong> ${it.name}</div>
+                    <div><strong>Dimensions:</strong> ${it.dim}</div>
+                    <div><strong>Size:</strong> ${it.size}</div>
+                    <div><strong>Alt:</strong> ${it.alt}</div>
+                    <div><strong>Caption:</strong> ${it.caption}</div>
+                    <div><strong>URL:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.url}</a></div>
+                `;
+                entry.appendChild(infoDiv);
+
+                txt.appendChild(entry);
+                const hr = d.createElement("hr");
+                Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
+                txt.appendChild(hr);
+            });
+        };
+
+        updateOverlay();
         o.append(mkbar("top"), txt, mkbar("bottom"));
         d.body.appendChild(o);
 
-        console.log("Image Data Overlay v10 loaded with working draggable badge handles and overlay.");
+        // Fetch image sizes
+        items.forEach(it => {
+            fetch(it.url, { method: "HEAD" })
+                .then(r => {
+                    const cl = r.headers.get("content-length");
+                    it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+                    updateOverlay();
+                })
+                .catch(() => { it.size = "Error"; updateOverlay(); });
+        });
+
+        console.log("Image Data Overlay v11 loaded successfully with full features.");
+
     } catch (e) { console.error(e); }
 })();
