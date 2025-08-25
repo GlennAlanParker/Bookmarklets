@@ -26,7 +26,34 @@
         // Create shadow root
         const shadow = shadowHost.attachShadow({ mode: 'open' });
 
-        // Inject CSS into shadow DOM
+        // Inject badge styles into document head for badges that appear outside shadow DOM
+        const badgeStyle = d.createElement('style');
+        badgeStyle.id = 'img-data-badge-styles';
+        badgeStyle.textContent = `
+            .img-data-badge {
+                position: absolute !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: #FFA500 !important;
+                color: #000 !important;
+                font-weight: 700 !important;
+                font-size: 14px !important;
+                border: 2px solid #000 !important;
+                width: 26px !important;
+                height: 26px !important;
+                line-height: 26px !important;
+                text-align: center !important;
+                user-select: none !important;
+                cursor: pointer !important;
+                border-radius: 4px !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+                z-index: 2147483648 !important;
+                text-decoration: none !important;
+                font-family: Arial, sans-serif !important;
+            }
+        `;
+        d.head.appendChild(badgeStyle);
         const style = d.createElement('style');
         style.textContent = `
             :host {
@@ -256,6 +283,8 @@
                 try {
                     badges.forEach(b => b.box?.remove());
                     badges.length = 0;
+                    const badgeStyles = d.getElementById('img-data-badge-styles');
+                    if (badgeStyles) badgeStyles.remove();
                     if (this.scrollHandler) removeEventListener("scroll", this.scrollHandler);
                     if (this.resizeHandler) removeEventListener("resize", this.resizeHandler);
                     if (this.interval) clearInterval(this.interval);
@@ -277,8 +306,8 @@
             a.target = "_blank";
             a.rel = "noopener noreferrer";
             a.textContent = index;
-            a.className = "badge";
-            shadow.appendChild(a);
+            a.className = "img-data-badge";
+            d.body.appendChild(a);
             badges.push({ img, box: a });
         };
 
