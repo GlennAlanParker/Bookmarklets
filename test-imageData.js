@@ -1,6 +1,6 @@
 (() => {
     try {
-        const LSK = "imgDataOverlay_v4";
+        const LSK = "imgDataOverlay_v1";
 
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
@@ -153,17 +153,17 @@
             });
 
             if (pos === "top") {
-                // Title (left-aligned with 20px margin)
+                // Title
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
                 Object.assign(title.style, {
                     margin: 0,
-                    color: "#fff",
-                    fontSize: "16px",
-                    marginLeft: "20px",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "flex-start"
+                    justifyContent: "flex-start", // left align
+                    marginLeft: "20px",            // 20px from left
+                    color: "#fff",
+                    fontSize: "16px"
                 });
                 b.appendChild(title);
 
@@ -175,37 +175,42 @@
 
                 // Toggle badges
                 const toggleGroup = d.createElement("div");
-                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
+                Object.assign(toggleGroup.style, {
+                    display: "flex",
+                    alignItems: "center",
+                    background: "#95a5a6",
+                    borderRadius: "6px",
+                    padding: "2px 6px",
+                    cursor: "pointer",
+                    userSelect: "none"
+                });
                 const label = d.createElement("span");
                 label.textContent = "Toggle Badges";
                 Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
                 toggleGroup.appendChild(label);
-
                 const toggleBtn = d.createElement("button");
                 toggleBtn.textContent = "🔢";
                 toggleBtn.title = "Toggle Number Badges";
                 Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
                 toggleGroup.appendChild(toggleBtn);
-
                 toggleGroup.onclick = e => {
                     e.stopPropagation();
                     window._imgData.badgesVisible = !window._imgData.badgesVisible;
                     badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
                 };
-
                 btns.appendChild(toggleGroup);
 
-                // Close button
+                // Close button (resized to match toggle height)
                 const x = d.createElement("div");
                 x.textContent = "×";
                 Object.assign(x.style, {
                     cursor: "pointer",
-                    fontSize: "20px",
+                    fontSize: "16px",
                     padding: "0",
-                    margin: "-6px 0 -6px 12px",
+                    margin: "0 0 0 12px",
                     borderRadius: "50%",
-                    width: "32px",
-                    height: "32px",
+                    width: toggleGroup.offsetHeight + "px",
+                    height: toggleGroup.offsetHeight + "px",
                     background: "#e74c3c",
                     color: "#fff",
                     display: "flex",
@@ -247,7 +252,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px"; // <-- requested change
+                badgeDiv.style.marginRight = "4px";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
@@ -276,7 +281,6 @@
                     const el = d.getElementById(it.anchorId);
                     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                 });
-
                 badgeDiv.appendChild(link);
                 entry.appendChild(badgeDiv);
 
@@ -330,7 +334,7 @@
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-        // Resizers (same as before)
+        // Resizers
         ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
             const h = d.createElement("div");
             Object.assign(h.style, {
