@@ -1,6 +1,7 @@
 (() => {
     try {
         const LSK = "imgDataOverlay_v5";
+
         if (window._imgData?.cleanup) window._imgData.cleanup();
 
         const d = document;
@@ -30,7 +31,7 @@
             return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
         });
 
-        // Create badge with draggable handle
+        // Create draggable numbered badge
         const createBadge = (img, index) => {
             const a = d.createElement("a");
             a.href = img.src;
@@ -56,10 +57,10 @@
                 borderRadius: "4px",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                 zIndex: 2147483648,
-                cursor: "default"
+                cursor: "pointer"
             });
 
-            // Draggable handle
+            // DRAG HANDLE overlay
             const handle = d.createElement("div");
             Object.assign(handle.style, {
                 position: "absolute",
@@ -68,6 +69,8 @@
                 width: "100%",
                 height: "100%",
                 cursor: "grab",
+                background: "transparent",
+                zIndex: 2147483649
             });
 
             let drag = null;
@@ -183,7 +186,15 @@
                 // Title
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
-                Object.assign(title.style, { margin: 0, flex: "1 0 auto", display: "flex", alignItems: "center", justifyContent: "flex-start", marginLeft: "20px", color: "#fff", fontSize: "16px" });
+                Object.assign(title.style, {
+                    margin: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    marginLeft: "20px",
+                    color: "#fff",
+                    fontSize: "18px"
+                });
                 b.appendChild(title);
 
                 // Buttons container
@@ -194,16 +205,26 @@
 
                 // Toggle badges
                 const toggleGroup = d.createElement("div");
-                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none" });
+                Object.assign(toggleGroup.style, {
+                    display: "flex",
+                    alignItems: "center",
+                    background: "#95a5a6",
+                    borderRadius: "6px",
+                    padding: "2px 6px",
+                    cursor: "pointer",
+                    userSelect: "none"
+                });
                 const label = d.createElement("span");
                 label.textContent = "Toggle Badges";
                 Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
                 toggleGroup.appendChild(label);
+
                 const toggleBtn = d.createElement("button");
                 toggleBtn.textContent = "🔢";
                 toggleBtn.title = "Toggle Number Badges";
                 Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
                 toggleGroup.appendChild(toggleBtn);
+
                 toggleGroup.onclick = e => {
                     e.stopPropagation();
                     window._imgData.badgesVisible = !window._imgData.badgesVisible;
@@ -217,14 +238,16 @@
                 Object.assign(x.style, {
                     cursor: "pointer",
                     fontSize: "16px",
-                    width: "24px",
-                    height: "24px",
-                    background: "#e74c3c",
-                    color: "#fff",
+                    width: "28px",
+                    height: "28px",
+                    padding: "0",
+                    margin: "0 0 0 12px",
                     borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    background: "#e74c3c",
+                    color: "#fff",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
                 });
                 x.title = "Close";
@@ -261,7 +284,7 @@
                 badgeDiv.style.display = "flex";
                 badgeDiv.style.alignItems = "center";
                 badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.marginRight = "10px"; // 10px padding
+                badgeDiv.style.marginRight = "4px";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`;
@@ -283,8 +306,10 @@
                     textDecoration: "none",
                     borderRadius: "4px",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    position: "relative"
                 });
+
                 link.addEventListener("click", e => {
                     e.preventDefault();
                     const el = d.getElementById(it.anchorId);
@@ -330,26 +355,21 @@
 
         setTimeout(() => { updateBadgePositions(); autosize(); }, 150);
 
-        // Overlay drag logic
+        // Drag overlay logic
         let drag = null;
-        const startDrag = (e) => {
+        const startDrag = e => {
             if (e.target.closest("[data-drag-ignore]")) return;
             const r = o.getBoundingClientRect();
             drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
             e.preventDefault();
         };
-        const onDrag = (e) => {
-            if (!drag) return;
-            o.style.left = (e.clientX - drag.dx) + "px";
-            o.style.top = (e.clientY - drag.dy) + "px";
-            o.style.right = "auto";
-        };
+        const onDrag = e => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
         const endDrag = () => { drag = null; };
         d.addEventListener("pointermove", onDrag);
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-        // Resizers
+        // Resizers (same as before)
         ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
             const h = d.createElement("div");
             Object.assign(h.style, {
@@ -371,6 +391,7 @@
             if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
             h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
             h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
+
             h.addEventListener("pointerdown", e => {
                 e.preventDefault(); e.stopPropagation();
                 let startX = e.clientX, startY = e.clientY;
@@ -393,6 +414,7 @@
                 d.addEventListener("pointermove", onMove);
                 d.addEventListener("pointerup", onUp);
             });
+
             o.appendChild(h);
         });
 
