@@ -221,43 +221,56 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
 
-        // Scroll to top button
-        const scrollTopBtn = d.createElement("div");
-        scrollTopBtn.textContent = "↑";
-        Object.assign(scrollTopBtn.style, {
-            position: "absolute",
-            bottom: "10px",
-            right: "10px",
-            width: "30px",
-            height: "30px",
-            background: "#34495e",
-            color: "#fff",
-            display: "none",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "50%",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: "bold",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-            zIndex: "10",
-            transition: "all 0.2s ease",
-            userSelect: "none"
-        });
+// Scroll to top button
+const scrollTopBtn = d.createElement("div");
+scrollTopBtn.textContent = "↑";
+Object.assign(scrollTopBtn.style, {
+    position: "absolute",       // absolute inside overlay
+    bottom: "10px",
+    right: "10px",
+    width: "30px",
+    height: "30px",
+    background: "#34495e",
+    color: "#fff",
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "50%",
+    cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: "bold",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+    zIndex: "10",
+    transition: "all 0.2s ease",
+    userSelect: "none"
+});
 
-        scrollTopBtn.addEventListener("mouseenter", () => {
-            scrollTopBtn.style.background = "#2c3e50";
-            scrollTopBtn.style.transform = "scale(1.1)";
-        });
+// Hover effect
+scrollTopBtn.addEventListener("mouseenter", () => {
+    scrollTopBtn.style.background = "#2c3e50";
+    scrollTopBtn.style.transform = "scale(1.1)";
+});
+scrollTopBtn.addEventListener("mouseleave", () => {
+    scrollTopBtn.style.background = "#34495e";
+    scrollTopBtn.style.transform = "scale(1)";
+});
 
-        scrollTopBtn.addEventListener("mouseleave", () => {
-            scrollTopBtn.style.background = "#34495e";
-            scrollTopBtn.style.transform = "scale(1)";
-        });
+// Click to scroll to top
+scrollTopBtn.addEventListener("click", () => {
+    txt.scrollTo({ top: 0, behavior: "smooth" });
+});
 
-        scrollTopBtn.addEventListener("click", () => {
-            txt.scrollTo({ top: 0, behavior: "smooth" });
-        });
+// Append inside overlay content
+txt.appendChild(scrollTopBtn);
+
+// Show/hide based on scroll position
+txt.addEventListener("scroll", () => {
+    if (txt.scrollTop > 20) {
+        scrollTopBtn.style.display = "flex";
+    } else {
+        scrollTopBtn.style.display = "none";
+    }
+});
 
         txt.appendChild(scrollTopBtn);
 
