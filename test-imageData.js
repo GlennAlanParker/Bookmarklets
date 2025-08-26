@@ -263,8 +263,7 @@
                 entry.style.display = "flex"; entry.style.alignItems = "flex-start"; entry.style.padding = "4px 0";
 
                 const badgeDiv = d.createElement("div");
-                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
-                badgeDiv.style.display = "flex"; badgeDiv.style.alignItems = "center"; badgeDiv.style.justifyContent = "center"; badgeDiv.style.paddingRight = "10px";
+                badgeDiv.style.flex = `0 0 ${badgeSize}px`; badgeDiv.style.display = "flex"; badgeDiv.style.alignItems = "center"; badgeDiv.style.justifyContent = "center"; badgeDiv.style.paddingRight = "10px";
 
                 const link = d.createElement("a");
                 link.href = `#${it.anchorId}`; link.textContent = i + 1;
@@ -313,7 +312,7 @@
         d.addEventListener("pointermove", onDrag); d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-        // Resizers with full viewport expansion
+        // Resizers (full viewport)
         ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
             const h = d.createElement("div");
             Object.assign(h.style, {
@@ -333,18 +332,18 @@
 
             h.addEventListener("pointerdown", e => {
                 e.preventDefault(); e.stopPropagation();
-                let startX = e.clientX, startY = e.clientY;
+                const startX = e.clientX, startY = e.clientY;
                 const r = o.getBoundingClientRect();
-                let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
+                const startW = r.width, startH = r.height, startL = r.left, startT = r.top;
 
                 const onMove = me => {
-                    let dx = me.clientX - startX, dy = me.clientY - startY;
+                    const dx = me.clientX - startX, dy = me.clientY - startY;
                     let w = startW, hH = startH, l = startL, t = startT;
 
                     if (dir.includes("e")) w = Math.max(200, Math.min(startW + dx, innerWidth - startL));
                     if (dir.includes("s")) hH = Math.max(100, Math.min(startH + dy, innerHeight - startT));
                     if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; if (l < 0) { w += l; l = 0; } }
-                    if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = Math.max(0, startT + dy); if (t === 0) { hH = startH + startT; } }
+                    if (dir.includes("n")) { t = Math.max(0, startT + dy); hH = Math.max(100, startH - dy + (startT - t)); }
 
                     o.style.width = w + "px"; o.style.height = hH + "px"; o.style.left = l + "px"; o.style.top = t + "px"; o.style.right = "auto";
                 };
