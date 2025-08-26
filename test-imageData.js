@@ -416,28 +416,38 @@ const onMove = me => {
     let newWidth = startW;
     let newHeight = startH;
 
+    // East
     if (dir.includes("e")) {
         newWidth = Math.min(window.innerWidth - startL, Math.max(minW, startW + dx));
     }
+
+    // West
     if (dir.includes("w")) {
         newLeft = Math.max(0, startL + dx);
         newWidth = Math.max(minW, (startL + startW) - newLeft);
     }
+
+    // South
     if (dir.includes("s")) {
         let bottom = Math.min(window.innerHeight, me.clientY);
         newHeight = Math.max(minH, bottom - startT);
     }
+
+    // North
     if (dir.includes("n")) {
-        newTop = Math.max(0, Math.min(startT + startH - minH, me.clientY));
-        newHeight = (startT + startH) - newTop;
+        let bottom = startT + startH;
+        newTop = Math.max(0, me.clientY);
+        newHeight = Math.max(minH, bottom - newTop);
     }
 
+    // Apply
     o.style.width = newWidth + "px";
     o.style.height = newHeight + "px";
     o.style.left = newLeft + "px";
     o.style.top = newTop + "px";
     o.style.right = "auto";
 };
+
 
         const onUp = () => {
             d.removeEventListener("pointermove", onMove);
