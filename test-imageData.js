@@ -405,27 +405,32 @@
         const r = o.getBoundingClientRect();
         let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
 
-        const onMove = me => {
-            let dx = me.clientX - startX, dy = me.clientY - startY;
-            let w = startW, hH = startH, l = startL, t = startT;
+const onMove = me => {
+    let dx = me.clientX - startX;
+    let dy = me.clientY - startY;
+    let w = startW, hH = startH, l = startL, t = startT;
 
-            if (dir.includes("e")) w = Math.max(200, startW + dx);
-            if (dir.includes("s")) hH = Math.max(100, startH + dy);
-            if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
-            if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = startT + dy; }
+    // East/West
+    if (dir.includes("e")) w = Math.max(200, startW + dx);
+    if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
 
-            // Prevent overlay from moving outside viewport
-            t = Math.max(0, t);
-            l = Math.max(0, l);
-            w = Math.min(w, window.innerWidth - l);
-            hH = Math.min(hH, window.innerHeight - t);
+    // North/South
+    if (dir.includes("s")) {
+        hH = Math.max(100, Math.min(window.innerHeight - startT, startH + dy));
+    }
+    if (dir.includes("n")) {
+        hH = Math.max(100, Math.min(startH + startT, startH - dy));
+        t = Math.max(0, startT + dy);
+    }
 
-            o.style.width = w + "px";
-            o.style.height = hH + "px";
-            o.style.left = l + "px";
-            o.style.top = t + "px";
-            o.style.right = "auto";
-        };
+    // Apply
+    o.style.width = w + "px";
+    o.style.height = hH + "px";
+    o.style.left = l + "px";
+    o.style.top = t + "px";
+    o.style.right = "auto";
+};
+
 
         const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
         d.addEventListener("pointermove", onMove);
