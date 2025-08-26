@@ -403,9 +403,8 @@
                 let startX = e.clientX, startY = e.clientY;
                 const r = o.getBoundingClientRect();
                 let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
-
-                
-const onMove = me => {
+    
+    const onMove = me => {
     let dx = me.clientX - startX, dy = me.clientY - startY;
     let w = startW, hH = startH, l = startL, t = startT;
 
