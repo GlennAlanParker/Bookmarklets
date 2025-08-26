@@ -80,7 +80,6 @@
             n++;
         }
 
-        // Update badge positions
         const updateBadgePositions = () => {
             const placed = [];
             for (const b of badges) {
@@ -137,7 +136,7 @@
 
         const headerH = 56, footerH = 28;
 
-        // Top/Bottom Bars
+        // Top/Bottom bars
         const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
@@ -164,7 +163,6 @@
                 btns.style.alignItems = "center";
                 btns.style.gap = "8px";
 
-                // Toggle badges
                 const toggleGroup = d.createElement("div");
                 const toggleHeight = badgeSize + 6;
                 Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none", height: toggleHeight + "px" });
@@ -187,7 +185,6 @@
 
                 btns.appendChild(toggleGroup);
 
-                // Close button
                 const x = d.createElement("div");
                 x.textContent = "×";
                 Object.assign(x.style, {
@@ -220,7 +217,7 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", display: "flex", flexDirection: "column", position: "relative" });
 
-        // --- Scroll to Top Button ---
+        // Scroll-to-top button
         const scrollTopBtn = d.createElement("div");
         scrollTopBtn.textContent = "↑";
         Object.assign(scrollTopBtn.style, {
@@ -248,8 +245,84 @@
         scrollTopBtn.addEventListener("click", () => { txt.scrollTo({ top: 0, behavior: "smooth" }); });
         txt.appendChild(scrollTopBtn);
         txt.addEventListener("scroll", () => { scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none"; });
+
+        // Append overlay structure
         o.append(mkbar("top"), txt, mkbar("bottom"));
         d.body.appendChild(o);
+
+        // --- Draggable header/footer logic ---
+        let drag = null;
+        const startDrag = (e) => {
+            if (e.target.closest("[data-drag-ignore]")) return;
+            const r = o.getBoundingClientRect();
+            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+            e.preventDefault();
+        };
+        const onDrag = (e) => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
+        const endDrag = () => { drag = null; };
+        d.addEventListener("pointermove", onDrag);
+        d.addEventListener("pointerup", endDrag);
+        d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
+
+        // --- Resizers ---
+        ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
+            const h = d.createElement("div");
+            Object.assign(h.style, {
+                position: "absolute",
+                width: "8px",
+                height: "8px",
+                background: "#09f",
+                opacity: "0.85",
+                zIndex: "2147483648",
+                borderRadius: "2px",
+                cursor: dir + "-resize",
+                transition: "box-shadow 0.15s, transform 0.15s"
+            });
+            if (dir.includes("n")) h.style.top = "0";
+            if (dir.includes("s")) h.style.bottom = "0";
+            if (dir.includes("e")) h.style.right = "0";
+            if (dir.includes("w")) h.style.left = "0";
+            if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
+            if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
+
+            h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
+            h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
+
+            h.addEventListener("pointerdown", e => {
+                e.preventDefault(); e.stopPropagation();
+                let startX = e.clientX, startY = e.clientY;
+                const r = o.getBoundingClientRect();
+                let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
+                const minW = 200, minH = 140;
+
+                const onMove = me => {
+                    let dx = me.clientX - startX;
+                    let dy = me.clientY - startY;
+
+                    let newTop = startT;
+                    let newLeft = startL;
+                    let newWidth = startW;
+                    let newHeight = startH;
+
+                    if (dir.includes("e")) newWidth = Math.min(window.innerWidth - startL, Math.max(minW, startW + dx));
+                    if (dir.includes("w")) { newLeft = Math.max(0, startL + dx); newWidth = Math.max(minW, (startL + startW) - newLeft); }
+                    if (dir.includes("s")) { let bottom = Math.min(window.innerHeight, me.clientY); newHeight = Math.max(minH, bottom - startT); }
+                    if (dir.includes("n")) { let bottom = startT + startH; newTop = Math.max(0, me.clientY); newHeight = Math.max(minH, bottom - newTop); }
+
+                    o.style.width = newWidth + "px";
+                    o.style.height = newHeight + "px";
+                    o.style.left = newLeft + "px";
+                    o.style.top = newTop + "px";
+                    o.style.right = "auto";
+                };
+
+                const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
+                d.addEventListener("pointermove", onMove);
+                d.addEventListener("pointerup", onUp);
+            });
+
+            o.appendChild(h);
+        });
 
     } catch (e) { console.error(e); }
 })();
