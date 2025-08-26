@@ -61,7 +61,7 @@
             badges.push({ img, box: a });
         };
 
-        // Collect item data
+        // Collect image items
         for (const img of imgs) {
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
@@ -80,6 +80,7 @@
             n++;
         }
 
+        // Update badge positions
         const updateBadgePositions = () => {
             const placed = [];
             for (const b of badges) {
@@ -136,7 +137,7 @@
 
         const headerH = 56, footerH = 28;
 
-        // Top bar
+        // Top/Bottom Bars
         const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
@@ -219,11 +220,11 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", display: "flex", flexDirection: "column", position: "relative" });
 
-        // --- Scroll to Top Button (Corrected) ---
+        // --- Scroll to Top Button ---
         const scrollTopBtn = d.createElement("div");
         scrollTopBtn.textContent = "↑";
         Object.assign(scrollTopBtn.style, {
-            position: "sticky",  // pinned relative to txt
+            position: "sticky",
             bottom: "10px",
             alignSelf: "flex-end",
             width: "30px",
@@ -247,99 +248,8 @@
         scrollTopBtn.addEventListener("click", () => { txt.scrollTo({ top: 0, behavior: "smooth" }); });
         txt.appendChild(scrollTopBtn);
         txt.addEventListener("scroll", () => { scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none"; });
-
-        // Continue with update function and content generation
-        const autosize = () => {
-            const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight)));
-            o.style.height = h + "px";
-        };
-
-        const update = () => {
-            [...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
-            if (!items.length) { txt.insertBefore(d.createTextNode("No images found."), scrollTopBtn); return; }
-
-            items.forEach((it, i) => {
-                const entry = d.createElement("div");
-                entry.className = "img-entry";
-                entry.style.display = "flex";
-                entry.style.alignItems = "flex-start";
-                entry.style.padding = "4px 0";
-
-                const badgeDiv = d.createElement("div");
-                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
-                badgeDiv.style.display = "flex";
-                badgeDiv.style.alignItems = "center";
-                badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.paddingRight = "10px";
-
-                const link = d.createElement("a");
-                link.href = `#${it.anchorId}`;
-                link.textContent = i + 1;
-                Object.assign(link.style, {
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#FFA500",
-                    color: "#000",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    border: "2px solid #000",
-                    width: badgeSize + "px",
-                    height: badgeSize + "px",
-                    lineHeight: badgeSize + "px",
-                    textAlign: "center",
-                    userSelect: "none",
-                    textDecoration: "none",
-                    borderRadius: "4px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                    cursor: "pointer"
-                });
-                link.addEventListener("click", e => { e.preventDefault(); const el = d.getElementById(it.anchorId); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
-
-                badgeDiv.appendChild(link);
-                entry.appendChild(badgeDiv);
-
-                const infoDiv = d.createElement("div");
-                infoDiv.style.flex = "1";
-                infoDiv.innerHTML = `
-                    <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
-                    <div><strong>Dimensions:</strong> ${it.dim}</div>
-                    <div><strong>Size:</strong> ${it.size}</div>
-                    <div><strong>Alt:</strong> ${it.alt}</div>
-                    <div><strong>Caption:</strong> ${it.caption}</div>
-                `;
-                entry.appendChild(infoDiv);
-
-                txt.insertBefore(entry, scrollTopBtn);
-                if (i < items.length - 1) {
-                    const hr = d.createElement("hr");
-                    hr.className = "img-separator";
-                    Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-                    txt.insertBefore(hr, scrollTopBtn);
-                }
-            });
-
-            autosize();
-        };
-
-        update();
         o.append(mkbar("top"), txt, mkbar("bottom"));
         d.body.appendChild(o);
 
-        items.forEach(it => {
-            fetch(it.url, { method: "HEAD" })
-                .then(r => {
-                    const cl = r.headers.get("content-length");
-                    it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-                    update();
-                })
-                .catch(() => { it.size = "Error"; update(); });
-        });
-
-        setTimeout(() => { updateBadgePositions(); autosize(); }, 150);
-
-        // Drag logic and resizers remain the same...
-        // (unchanged from your original script)
-        
     } catch (e) { console.error(e); }
 })();
