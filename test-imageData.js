@@ -1,4 +1,3 @@
-
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
@@ -222,58 +221,57 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
 
-// Scroll to top button
-const scrollTopBtn = d.createElement("div");
-scrollTopBtn.textContent = "↑";
-Object.assign(scrollTopBtn.style, {
-    position: "absolute",       // absolute inside overlay
-    bottom: "10px",
-    right: "10px",
-    width: "30px",
-    height: "30px",
-    background: "#34495e",
-    color: "#fff",
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "50%",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "bold",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-    zIndex: "10",
-    transition: "all 0.2s ease",
-    userSelect: "none"
-});
+        // Scroll to top button - positioned fixed relative to overlay
+        const scrollTopBtn = d.createElement("div");
+        scrollTopBtn.textContent = "↑";
+        Object.assign(scrollTopBtn.style, {
+            position: "absolute",
+            bottom: "10px",
+            right: "10px",
+            width: "30px",
+            height: "30px",
+            background: "#34495e",
+            color: "#fff",
+            display: "none",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "16px",
+            fontWeight: "bold",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            zIndex: "10",
+            transition: "all 0.2s ease",
+            userSelect: "none",
+            pointerEvents: "auto"
+        });
 
-// Hover effect
-scrollTopBtn.addEventListener("mouseenter", () => {
-    scrollTopBtn.style.background = "#2c3e50";
-    scrollTopBtn.style.transform = "scale(1.1)";
-});
-scrollTopBtn.addEventListener("mouseleave", () => {
-    scrollTopBtn.style.background = "#34495e";
-    scrollTopBtn.style.transform = "scale(1)";
-});
+        // Hover effect
+        scrollTopBtn.addEventListener("mouseenter", () => {
+            scrollTopBtn.style.background = "#2c3e50";
+            scrollTopBtn.style.transform = "scale(1.1)";
+        });
+        scrollTopBtn.addEventListener("mouseleave", () => {
+            scrollTopBtn.style.background = "#34495e";
+            scrollTopBtn.style.transform = "scale(1)";
+        });
 
-// Click to scroll to top
-scrollTopBtn.addEventListener("click", () => {
-    txt.scrollTo({ top: 0, behavior: "smooth" });
-});
+        // Click to scroll to top
+        scrollTopBtn.addEventListener("click", () => {
+            txt.scrollTo({ top: 0, behavior: "smooth" });
+        });
 
-// Append inside overlay content
-txt.appendChild(scrollTopBtn);
+        // Append to overlay (not txt) so it's positioned relative to overlay
+        o.appendChild(scrollTopBtn);
 
-// Show/hide based on scroll position
-txt.addEventListener("scroll", () => {
-    if (txt.scrollTop > 20) {
-        scrollTopBtn.style.display = "flex";
-    } else {
-        scrollTopBtn.style.display = "none";
-    }
-});
-
-        txt.appendChild(scrollTopBtn);
+        // Show/hide based on scroll position
+        txt.addEventListener("scroll", () => {
+            if (txt.scrollTop > 20) {
+                scrollTopBtn.style.display = "flex";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        });
 
         // Show/hide scroll to top button based on scroll position
         const checkScroll = () => {
@@ -294,11 +292,13 @@ txt.addEventListener("scroll", () => {
         };
 
 const update = () => {
-    // Clear only entries, but keep the scroll button
+    // Clear only entries and separators
     [...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
 
     if (!items.length) {
-        txt.insertBefore(d.createTextNode("No images found."), scrollTopBtn);
+        const noImagesText = d.createElement("div");
+        noImagesText.textContent = "No images found.";
+        txt.appendChild(noImagesText);
         return;
     }
 
@@ -358,15 +358,14 @@ const update = () => {
         `;
         entry.appendChild(infoDiv);
 
-        // Insert before scroll button so it stays last
-        txt.insertBefore(entry, scrollTopBtn);
+        txt.appendChild(entry);
 
         // Add separator only if not the last item
         if (i < items.length - 1) {
             const hr = d.createElement("hr");
             hr.className = "img-separator";
             Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-            txt.insertBefore(hr, scrollTopBtn);
+            txt.appendChild(hr);
         }
     });
 
