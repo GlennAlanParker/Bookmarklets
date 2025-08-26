@@ -405,38 +405,39 @@
         const r = o.getBoundingClientRect();
         let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
 
-        const onMove = me => {
-            let dx = me.clientX - startX;
-            let dy = me.clientY - startY;
+const minW = 200, minH = 140;
 
-            let newTop = startT;
-            let newLeft = startL;
-            let newWidth = startW;
-            let newHeight = startH;
+const onMove = me => {
+    let dx = me.clientX - startX;
+    let dy = me.clientY - startY;
 
-            if (dir.includes("e")) {
-                newWidth = Math.min(window.innerWidth - startL, Math.max(200, startW + dx));
-            }
-            if (dir.includes("w")) {
-                newLeft = Math.max(0, startL + dx);
-                newWidth = Math.min(startW - dx, startW + startL); 
-                newWidth = Math.max(200, Math.min(newWidth, window.innerWidth - newLeft));
-            }
-            if (dir.includes("s")) {
-                newHeight = Math.min(window.innerHeight - startT, Math.max(140, startH + dy));
-            }
-            if (dir.includes("n")) {
-                newTop = Math.max(0, startT + dy);
-                newHeight = Math.min(startH - dy, startH + startT);
-                newHeight = Math.max(140, Math.min(newHeight, window.innerHeight - newTop));
-            }
+    let newTop = startT;
+    let newLeft = startL;
+    let newWidth = startW;
+    let newHeight = startH;
 
-            o.style.width = newWidth + "px";
-            o.style.height = newHeight + "px";
-            o.style.left = newLeft + "px";
-            o.style.top = newTop + "px";
-            o.style.right = "auto";
-        };
+    if (dir.includes("e")) {
+        newWidth = Math.min(window.innerWidth - startL, Math.max(minW, startW + dx));
+    }
+    if (dir.includes("w")) {
+        newLeft = Math.max(0, startL + dx);
+        newWidth = Math.max(minW, (startL + startW) - newLeft);
+    }
+    if (dir.includes("s")) {
+        let bottom = Math.min(window.innerHeight, me.clientY);
+        newHeight = Math.max(minH, bottom - startT);
+    }
+    if (dir.includes("n")) {
+        newTop = Math.max(0, Math.min(startT + startH - minH, me.clientY));
+        newHeight = (startT + startH) - newTop;
+    }
+
+    o.style.width = newWidth + "px";
+    o.style.height = newHeight + "px";
+    o.style.left = newLeft + "px";
+    o.style.top = newTop + "px";
+    o.style.right = "auto";
+};
 
         const onUp = () => {
             d.removeEventListener("pointermove", onMove);
