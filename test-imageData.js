@@ -403,19 +403,38 @@
                 let startX = e.clientX, startY = e.clientY;
                 const r = o.getBoundingClientRect();
                 let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
-                const onMove = me => {
-                    let dx = me.clientX - startX, dy = me.clientY - startY;
-                    let w = startW, hH = startH, l = startL, t = startT;
-                    if (dir.includes("e")) w = Math.max(200, startW + dx);
-                    if (dir.includes("s")) hH = Math.max(100, startH + dy);
-                    if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
-                    if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = startT + dy; }
-                    o.style.width = w + "px";
-                    o.style.height = hH + "px";
-                    o.style.left = l + "px";
-                    o.style.top = t + "px";
-                    o.style.right = "auto";
-                };
+
+                
+const onMove = me => {
+    let dx = me.clientX - startX, dy = me.clientY - startY;
+    let w = startW, hH = startH, l = startL, t = startT;
+
+    if (dir.includes("e")) {
+        w = Math.max(200, Math.min(startW + dx, innerWidth - startL));
+    }
+    if (dir.includes("s")) {
+        hH = Math.max(100, Math.min(startH + dy, innerHeight - startT));
+    }
+    if (dir.includes("w")) {
+        w = Math.max(200, Math.min(startW - dx, startW + startL)); 
+        l = Math.min(startL + dx, startL + startW - 200); 
+        if (l < 0) { w += l; l = 0; } 
+    }
+    if (dir.includes("n")) {
+        hH = Math.max(100, Math.min(startH - dy, startH + startT)); 
+        t = Math.min(startT + dy, startT + startH - 100);
+        if (t < 0) { hH += t; t = 0; }
+    }
+
+    o.style.width = w + "px";
+    o.style.height = hH + "px";
+    o.style.left = l + "px";
+    o.style.top = t + "px";
+    o.style.right = "auto";
+};
+
+
+                
                 const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
                 d.addEventListener("pointermove", onMove);
                 d.addEventListener("pointerup", onUp);
