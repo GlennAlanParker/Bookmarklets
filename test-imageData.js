@@ -375,7 +375,7 @@
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-// Resizers (fixed)
+// Resizers (allows full viewport edges)
 ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
     const h = d.createElement("div");
     Object.assign(h.style, {
@@ -405,42 +405,43 @@
         const r = o.getBoundingClientRect();
         let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
 
-const onMove = me => {
-    let dx = me.clientX - startX;
-    let dy = me.clientY - startY;
+        const onMove = me => {
+            let dx = me.clientX - startX;
+            let dy = me.clientY - startY;
 
-    let r = o.getBoundingClientRect();
-    let newTop = r.top;
-    let newLeft = r.left;
-    let newWidth = r.width;
-    let newHeight = r.height;
+            let newTop = startT;
+            let newLeft = startL;
+            let newWidth = startW;
+            let newHeight = startH;
 
-    if (dir.includes("e")) newWidth = Math.max(200, startW + dx);
-    if (dir.includes("w")) { newWidth = Math.max(200, startW - dx); newLeft = startL + dx; }
+            if (dir.includes("e")) {
+                newWidth = Math.min(window.innerWidth - startL, Math.max(200, startW + dx));
+            }
+            if (dir.includes("w")) {
+                newLeft = Math.max(0, startL + dx);
+                newWidth = Math.min(startW - dx, startW + startL); 
+                newWidth = Math.max(200, Math.min(newWidth, window.innerWidth - newLeft));
+            }
+            if (dir.includes("s")) {
+                newHeight = Math.min(window.innerHeight - startT, Math.max(140, startH + dy));
+            }
+            if (dir.includes("n")) {
+                newTop = Math.max(0, startT + dy);
+                newHeight = Math.min(startH - dy, startH + startT);
+                newHeight = Math.max(140, Math.min(newHeight, window.innerHeight - newTop));
+            }
 
-    if (dir.includes("s")) {
-        let bottom = r.bottom + dy;
-        bottom = Math.min(bottom, window.innerHeight);
-        newHeight = bottom - r.top;
-    }
+            o.style.width = newWidth + "px";
+            o.style.height = newHeight + "px";
+            o.style.left = newLeft + "px";
+            o.style.top = newTop + "px";
+            o.style.right = "auto";
+        };
 
-    if (dir.includes("n")) {
-        let top = r.top + dy;
-        top = Math.max(0, top);
-        newHeight = r.bottom - top;
-        newTop = top;
-    }
-
-    o.style.width = newWidth + "px";
-    o.style.height = newHeight + "px";
-    o.style.left = newLeft + "px";
-    o.style.top = newTop + "px";
-    o.style.right = "auto";
-};
-
-
-
-        const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
+        const onUp = () => {
+            d.removeEventListener("pointermove", onMove);
+            d.removeEventListener("pointerup", onUp);
+        };
         d.addEventListener("pointermove", onMove);
         d.addEventListener("pointerup", onUp);
     });
