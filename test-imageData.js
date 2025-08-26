@@ -279,71 +279,75 @@
             o.style.height = h + "px";
         };
 
-        const update = () => {
-            txt.innerHTML = "";
-            if (!items.length) { txt.textContent = "No images found."; return; }
-            items.forEach((it, i) => {
-                const entry = d.createElement("div");
-                entry.style.display = "flex";
-                entry.style.alignItems = "flex-start";
-                entry.style.padding = "4px 0";
+const update = () => {
+    txt.innerHTML = "";
+    if (!items.length) { txt.textContent = "No images found."; return; }
+    items.forEach((it, i) => {
+        const entry = d.createElement("div");
+        entry.style.display = "flex";
+        entry.style.alignItems = "flex-start";
+        entry.style.padding = "4px 0";
 
-                const badgeDiv = d.createElement("div");
-                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
-                badgeDiv.style.display = "flex";
-                badgeDiv.style.alignItems = "center";
-                badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.paddingRight = "10px";
+        const badgeDiv = d.createElement("div");
+        badgeDiv.style.flex = `0 0 ${badgeSize}px`;
+        badgeDiv.style.display = "flex";
+        badgeDiv.style.alignItems = "center";
+        badgeDiv.style.justifyContent = "center";
+        badgeDiv.style.paddingRight = "10px";
 
-                const link = d.createElement("a");
-                link.href = `#${it.anchorId}`;
-                link.textContent = i + 1;
-                Object.assign(link.style, {
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#FFA500",
-                    color: "#000",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    border: "2px solid #000",
-                    width: badgeSize + "px",
-                    height: badgeSize + "px",
-                    lineHeight: badgeSize + "px",
-                    textAlign: "center",
-                    userSelect: "none",
-                    textDecoration: "none",
-                    borderRadius: "4px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                    cursor: "pointer"
-                });
-                link.addEventListener("click", e => {
-                    e.preventDefault();
-                    const el = d.getElementById(it.anchorId);
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                });
+        const link = d.createElement("a");
+        link.href = `#${it.anchorId}`;
+        link.textContent = i + 1;
+        Object.assign(link.style, {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#FFA500",
+            color: "#000",
+            fontWeight: "700",
+            fontSize: "14px",
+            border: "2px solid #000",
+            width: badgeSize + "px",
+            height: badgeSize + "px",
+            lineHeight: badgeSize + "px",
+            textAlign: "center",
+            userSelect: "none",
+            textDecoration: "none",
+            borderRadius: "4px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            cursor: "pointer"
+        });
+        link.addEventListener("click", e => {
+            e.preventDefault();
+            const el = d.getElementById(it.anchorId);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
 
-                badgeDiv.appendChild(link);
-                entry.appendChild(badgeDiv);
+        badgeDiv.appendChild(link);
+        entry.appendChild(badgeDiv);
 
-                const infoDiv = d.createElement("div");
-                infoDiv.style.flex = "1";
-                infoDiv.innerHTML = `
-                    <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
-                    <div><strong>Dimensions:</strong> ${it.dim}</div>
-                    <div><strong>Size:</strong> ${it.size}</div>
-                    <div><strong>Alt:</strong> ${it.alt}</div>
-                    <div><strong>Caption:</strong> ${it.caption}</div>
-                `;
-                entry.appendChild(infoDiv);
-                txt.appendChild(entry);
+        const infoDiv = d.createElement("div");
+        infoDiv.style.flex = "1";
+        infoDiv.innerHTML = `
+            <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
+            <div><strong>Dimensions:</strong> ${it.dim}</div>
+            <div><strong>Size:</strong> ${it.size}</div>
+            <div><strong>Alt:</strong> ${it.alt}</div>
+            <div><strong>Caption:</strong> ${it.caption}</div>
+        `;
+        entry.appendChild(infoDiv);
+        txt.appendChild(entry);
 
-                const hr = d.createElement("hr");
-                Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-                txt.appendChild(hr);
-            });
-            autosize();
-        };
+        // Only add <hr> if not the last item
+        if (i < items.length - 1) {
+            const hr = d.createElement("hr");
+            Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
+            txt.appendChild(hr);
+        }
+    });
+    autosize();
+};
+
 
         update();
         o.append(mkbar("top"), txt, mkbar("bottom"));
