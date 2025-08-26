@@ -330,27 +330,49 @@
             h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
             h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
 
-            h.addEventListener("pointerdown", e => {
-                e.preventDefault(); e.stopPropagation();
-                const startX = e.clientX, startY = e.clientY;
-                const r = o.getBoundingClientRect();
-                const startW = r.width, startH = r.height, startL = r.left, startT = r.top;
+    h.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation();
+    const startX = e.clientX, startY = e.clientY;
+    const rect = o.getBoundingClientRect();
 
-                const onMove = me => {
-                    const dx = me.clientX - startX, dy = me.clientY - startY;
-                    let w = startW, hH = startH, l = startL, t = startT;
+    const startW = rect.width, startH = rect.height, startL = rect.left, startT = rect.top;
 
-                    if (dir.includes("e")) w = Math.max(200, Math.min(startW + dx, innerWidth - startL));
-                    if (dir.includes("s")) hH = Math.max(100, Math.min(startH + dy, innerHeight - startT));
-                    if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; if (l < 0) { w += l; l = 0; } }
-                    if (dir.includes("n")) { t = Math.max(0, startT + dy); hH = Math.max(100, startH - dy + (startT - t)); }
+    const onMove = me => {
+        const dx = me.clientX - startX;
+        const dy = me.clientY - startY;
 
-                    o.style.width = w + "px"; o.style.height = hH + "px"; o.style.left = l + "px"; o.style.top = t + "px"; o.style.right = "auto";
-                };
+        let w = startW, hH = startH, l = startL, t = startT;
 
-                const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
-                d.addEventListener("pointermove", onMove); d.addEventListener("pointerup", onUp);
-            });
+        // East / West
+        if (dir.includes("e")) w = Math.min(innerWidth - startL, Math.max(200, startW + dx));
+        if (dir.includes("w")) { w = Math.max(200, startW - dx); l = Math.max(0, startL + dx); }
+
+        // South (expand to bottom)
+        if (dir.includes("s")) {
+            hH = Math.min(innerHeight - startT, Math.max(100, startH + dy));
+        }
+
+        // North (expand to top)
+        if (dir.includes("n")) {
+            t = Math.max(0, startT + dy);       // cannot go above top
+            hH = startH + (startT - t);         // adjust height to expand fully upward
+        }
+
+        o.style.width = w + "px";
+        o.style.height = hH + "px";
+        o.style.left = l + "px";
+        o.style.top = t + "px";
+        o.style.right = "auto";
+    };
+
+    const onUp = () => {
+        d.removeEventListener("pointermove", onMove);
+        d.removeEventListener("pointerup", onUp);
+    };
+
+    d.addEventListener("pointermove", onMove);
+    d.addEventListener("pointerup", onUp);
+});
 
             o.appendChild(h);
         });
