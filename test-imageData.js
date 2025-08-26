@@ -375,54 +375,65 @@
         d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-        // Resizers (same as before)
-        ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
-            const h = d.createElement("div");
-            Object.assign(h.style, {
-                position: "absolute",
-                width: "8px",
-                height: "8px",
-                background: "#09f",
-                opacity: "0.85",
-                zIndex: "2147483648",
-                borderRadius: "2px",
-                cursor: dir + "-resize",
-                transition: "box-shadow 0.15s, transform 0.15s"
-            });
-            if (dir.includes("n")) h.style.top = "0";
-            if (dir.includes("s")) h.style.bottom = "0";
-            if (dir.includes("e")) h.style.right = "0";
-            if (dir.includes("w")) h.style.left = "0";
-            if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
-            if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
-            h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
-            h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
+// Resizers (fixed)
+["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
+    const h = d.createElement("div");
+    Object.assign(h.style, {
+        position: "absolute",
+        width: "8px",
+        height: "8px",
+        background: "#09f",
+        opacity: "0.85",
+        zIndex: "2147483648",
+        borderRadius: "2px",
+        cursor: dir + "-resize",
+        transition: "box-shadow 0.15s, transform 0.15s"
+    });
+    if (dir.includes("n")) h.style.top = "0";
+    if (dir.includes("s")) h.style.bottom = "0";
+    if (dir.includes("e")) h.style.right = "0";
+    if (dir.includes("w")) h.style.left = "0";
+    if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
+    if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
 
-            h.addEventListener("pointerdown", e => {
-                e.preventDefault(); e.stopPropagation();
-                let startX = e.clientX, startY = e.clientY;
-                const r = o.getBoundingClientRect();
-                let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
-                const onMove = me => {
-                    let dx = me.clientX - startX, dy = me.clientY - startY;
-                    let w = startW, hH = startH, l = startL, t = startT;
-                    if (dir.includes("e")) w = Math.max(200, startW + dx);
-                    if (dir.includes("s")) hH = Math.max(100, startH + dy);
-                    if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
-                    if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = startT + dy; }
-                    o.style.width = w + "px";
-                    o.style.height = hH + "px";
-                    o.style.left = l + "px";
-                    o.style.top = t + "px";
-                    o.style.right = "auto";
-                };
-                const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
-                d.addEventListener("pointermove", onMove);
-                d.addEventListener("pointerup", onUp);
-            });
+    h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
+    h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
 
-            o.appendChild(h);
-        });
+    h.addEventListener("pointerdown", e => {
+        e.preventDefault(); e.stopPropagation();
+        let startX = e.clientX, startY = e.clientY;
+        const r = o.getBoundingClientRect();
+        let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
+
+        const onMove = me => {
+            let dx = me.clientX - startX, dy = me.clientY - startY;
+            let w = startW, hH = startH, l = startL, t = startT;
+
+            if (dir.includes("e")) w = Math.max(200, startW + dx);
+            if (dir.includes("s")) hH = Math.max(100, startH + dy);
+            if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
+            if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = startT + dy; }
+
+            // Prevent overlay from moving outside viewport
+            t = Math.max(0, t);
+            l = Math.max(0, l);
+            w = Math.min(w, window.innerWidth - l);
+            hH = Math.min(hH, window.innerHeight - t);
+
+            o.style.width = w + "px";
+            o.style.height = hH + "px";
+            o.style.left = l + "px";
+            o.style.top = t + "px";
+            o.style.right = "auto";
+        };
+
+        const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
+        d.addEventListener("pointermove", onMove);
+        d.addEventListener("pointerup", onUp);
+    });
+
+    o.appendChild(h);
+});
 
     } catch (e) { console.error(e); }
 })();
