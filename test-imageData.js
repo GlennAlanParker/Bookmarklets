@@ -408,28 +408,36 @@
 const onMove = me => {
     let dx = me.clientX - startX;
     let dy = me.clientY - startY;
-    let w = startW, hH = startH, l = startL, t = startT;
 
-    // East/West
-    if (dir.includes("e")) w = Math.max(200, startW + dx);
-    if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; }
+    let r = o.getBoundingClientRect();
+    let newTop = r.top;
+    let newLeft = r.left;
+    let newWidth = r.width;
+    let newHeight = r.height;
 
-    // North/South
+    if (dir.includes("e")) newWidth = Math.max(200, startW + dx);
+    if (dir.includes("w")) { newWidth = Math.max(200, startW - dx); newLeft = startL + dx; }
+
     if (dir.includes("s")) {
-        hH = Math.max(100, Math.min(window.innerHeight - startT, startH + dy));
-    }
-    if (dir.includes("n")) {
-        hH = Math.max(100, Math.min(startH + startT, startH - dy));
-        t = Math.max(0, startT + dy);
+        let bottom = r.bottom + dy;
+        bottom = Math.min(bottom, window.innerHeight);
+        newHeight = bottom - r.top;
     }
 
-    // Apply
-    o.style.width = w + "px";
-    o.style.height = hH + "px";
-    o.style.left = l + "px";
-    o.style.top = t + "px";
+    if (dir.includes("n")) {
+        let top = r.top + dy;
+        top = Math.max(0, top);
+        newHeight = r.bottom - top;
+        newTop = top;
+    }
+
+    o.style.width = newWidth + "px";
+    o.style.height = newHeight + "px";
+    o.style.left = newLeft + "px";
+    o.style.top = newTop + "px";
     o.style.right = "auto";
 };
+
 
 
         const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
