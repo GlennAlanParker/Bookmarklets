@@ -1,3 +1,4 @@
+
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
@@ -225,7 +226,7 @@
 const scrollTopBtn = d.createElement("div");
 scrollTopBtn.textContent = "↑";
 Object.assign(scrollTopBtn.style, {
-    position: "absolute",       // relative to overlay
+    position: "absolute",       // absolute inside overlay
     bottom: "10px",
     right: "10px",
     width: "30px",
@@ -240,7 +241,7 @@ Object.assign(scrollTopBtn.style, {
     fontSize: "16px",
     fontWeight: "bold",
     boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-    zIndex: "2147483647",       // higher than overlay content
+    zIndex: "10",
     transition: "all 0.2s ease",
     userSelect: "none"
 });
@@ -258,14 +259,6 @@ scrollTopBtn.addEventListener("mouseleave", () => {
 // Click to scroll to top
 scrollTopBtn.addEventListener("click", () => {
     txt.scrollTo({ top: 0, behavior: "smooth" });
-});
-
-// Append directly to overlay, not txt
-o.appendChild(scrollTopBtn);
-
-// Show/hide based on scroll position
-txt.addEventListener("scroll", () => {
-    scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none";
 });
 
 // Append inside overlay content
