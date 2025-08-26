@@ -221,6 +221,7 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
 
+// Create scroll-to-top button
 const scrollTopBtn = d.createElement("div");
 scrollTopBtn.textContent = "↑";
 Object.assign(scrollTopBtn.style, {
@@ -238,8 +239,10 @@ Object.assign(scrollTopBtn.style, {
     boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
     transition: "all 0.2s ease",
     userSelect: "none",
-    pointerEvents: "auto",
-    marginRight: "10px"  // spacing from the right edge
+    position: "absolute",
+    bottom: "6px",
+    right: "6px",
+    zIndex: 2147483649
 });
 
 // Hover effect
@@ -257,37 +260,15 @@ scrollTopBtn.addEventListener("click", () => {
     txt.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-// Append button **inside bottom bar** instead of overlay content
-const bottomBar = o.querySelector("div[data-drag-handle]:last-child");
-bottomBar.insertBefore(scrollTopBtn, bottomBar.firstChild);
+// Append inside overlay, on top of the content container
+txt.appendChild(scrollTopBtn);
 
-// Show/hide based on scroll
-txt.addEventListener("scroll", () => {
-    scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none";
-});
-        
 // Show/hide based on scroll position
-        txt.addEventListener("scroll", () => {
-            if (txt.scrollTop > 20) {
-                scrollTopBtn.style.display = "flex";
-            } else {
-                scrollTopBtn.style.display = "none";
-            }
-        });
-
-        // Show/hide scroll to top button based on scroll position
-        const checkScroll = () => {
-            if (txt.scrollTop > 20) {
-                scrollTopBtn.style.display = "flex";
-            } else {
-                scrollTopBtn.style.display = "none";
-            }
-        };
-        
-        txt.addEventListener("scroll", checkScroll);
-        // Also check on content updates
-        setTimeout(checkScroll, 100);
-
+const toggleScrollBtn = () => {
+    scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none";
+};
+txt.addEventListener("scroll", toggleScrollBtn);
+setTimeout(toggleScrollBtn, 100); // initial check
         const autosize = () => {
             const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight)));
             o.style.height = h + "px";
