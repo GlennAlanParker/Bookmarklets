@@ -1,3 +1,4 @@
+
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
@@ -221,54 +222,71 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
 
-// Create scroll-to-top button
-const scrollTopBtn = d.createElement("div");
-scrollTopBtn.textContent = "↑";
-Object.assign(scrollTopBtn.style, {
-    width: "30px",
-    height: "30px",
-    background: "#34495e",
-    color: "#fff",
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "50%",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "bold",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-    transition: "all 0.2s ease",
-    userSelect: "none",
-    position: "absolute",
-    bottom: "6px",
-    right: "6px",
-    zIndex: 2147483649
-});
+        // Scroll to top button - positioned fixed relative to overlay
+        const scrollTopBtn = d.createElement("div");
+        scrollTopBtn.textContent = "↑";
+        Object.assign(scrollTopBtn.style, {
+            position: "absolute",
+            bottom: "10px",
+            right: "10px",
+            width: "30px",
+            height: "30px",
+            background: "#34495e",
+            color: "#fff",
+            display: "none",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "16px",
+            fontWeight: "bold",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            zIndex: "10",
+            transition: "all 0.2s ease",
+            userSelect: "none",
+            pointerEvents: "auto"
+        });
 
-// Hover effect
-scrollTopBtn.addEventListener("mouseenter", () => {
-    scrollTopBtn.style.background = "#2c3e50";
-    scrollTopBtn.style.transform = "scale(1.1)";
-});
-scrollTopBtn.addEventListener("mouseleave", () => {
-    scrollTopBtn.style.background = "#34495e";
-    scrollTopBtn.style.transform = "scale(1)";
-});
+        // Hover effect
+        scrollTopBtn.addEventListener("mouseenter", () => {
+            scrollTopBtn.style.background = "#2c3e50";
+            scrollTopBtn.style.transform = "scale(1.1)";
+        });
+        scrollTopBtn.addEventListener("mouseleave", () => {
+            scrollTopBtn.style.background = "#34495e";
+            scrollTopBtn.style.transform = "scale(1)";
+        });
 
-// Click to scroll to top
-scrollTopBtn.addEventListener("click", () => {
-    txt.scrollTo({ top: 0, behavior: "smooth" });
-});
+        // Click to scroll to top
+        scrollTopBtn.addEventListener("click", () => {
+            txt.scrollTo({ top: 0, behavior: "smooth" });
+        });
 
-// Append inside overlay, on top of the content container
-txt.appendChild(scrollTopBtn);
+        // Append to overlay (not txt) so it's positioned relative to overlay
+        o.appendChild(scrollTopBtn);
 
-// Show/hide based on scroll position
-const toggleScrollBtn = () => {
-    scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none";
-};
-txt.addEventListener("scroll", toggleScrollBtn);
-setTimeout(toggleScrollBtn, 100); // initial check
+        // Show/hide based on scroll position
+        txt.addEventListener("scroll", () => {
+            if (txt.scrollTop > 20) {
+                scrollTopBtn.style.display = "flex";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        });
+
+        // Show/hide scroll to top button based on scroll position
+        const checkScroll = () => {
+            if (txt.scrollTop > 20) {
+                scrollTopBtn.style.display = "flex";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        };
+        
+        txt.addEventListener("scroll", checkScroll);
+        // Also check on content updates
+        setTimeout(checkScroll, 100);
+
         const autosize = () => {
             const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight)));
             o.style.height = h + "px";
