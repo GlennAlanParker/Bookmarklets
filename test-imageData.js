@@ -221,50 +221,52 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
 
-        // Scroll to top button - positioned fixed relative to overlay
-        const scrollTopBtn = d.createElement("div");
-        scrollTopBtn.textContent = "↑";
-        Object.assign(scrollTopBtn.style, {
-            position: "absolute",
-            bottom: "10px",
-            right: "10px",
-            width: "30px",
-            height: "30px",
-            background: "#34495e",
-            color: "#fff",
-            display: "none",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "50%",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: "bold",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-            zIndex: "10",
-            transition: "all 0.2s ease",
-            userSelect: "none",
-            pointerEvents: "auto"
-        });
+const scrollTopBtn = d.createElement("div");
+scrollTopBtn.textContent = "↑";
+Object.assign(scrollTopBtn.style, {
+    width: "30px",
+    height: "30px",
+    background: "#34495e",
+    color: "#fff",
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "50%",
+    cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: "bold",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+    transition: "all 0.2s ease",
+    userSelect: "none",
+    pointerEvents: "auto",
+    marginRight: "10px"  // spacing from the right edge
+});
 
-        // Hover effect
-        scrollTopBtn.addEventListener("mouseenter", () => {
-            scrollTopBtn.style.background = "#2c3e50";
-            scrollTopBtn.style.transform = "scale(1.1)";
-        });
-        scrollTopBtn.addEventListener("mouseleave", () => {
-            scrollTopBtn.style.background = "#34495e";
-            scrollTopBtn.style.transform = "scale(1)";
-        });
+// Hover effect
+scrollTopBtn.addEventListener("mouseenter", () => {
+    scrollTopBtn.style.background = "#2c3e50";
+    scrollTopBtn.style.transform = "scale(1.1)";
+});
+scrollTopBtn.addEventListener("mouseleave", () => {
+    scrollTopBtn.style.background = "#34495e";
+    scrollTopBtn.style.transform = "scale(1)";
+});
 
-        // Click to scroll to top
-        scrollTopBtn.addEventListener("click", () => {
-            txt.scrollTo({ top: 0, behavior: "smooth" });
-        });
+// Click to scroll to top
+scrollTopBtn.addEventListener("click", () => {
+    txt.scrollTo({ top: 0, behavior: "smooth" });
+});
 
-        // Append to overlay (not txt) so it's positioned relative to overlay
-        o.appendChild(scrollTopBtn);
+// Append button **inside bottom bar** instead of overlay content
+const bottomBar = o.querySelector("div[data-drag-handle]:last-child");
+bottomBar.insertBefore(scrollTopBtn, bottomBar.firstChild);
 
-        // Show/hide based on scroll position
+// Show/hide based on scroll
+txt.addEventListener("scroll", () => {
+    scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none";
+});
+        
+// Show/hide based on scroll position
         txt.addEventListener("scroll", () => {
             if (txt.scrollTop > 20) {
                 scrollTopBtn.style.display = "flex";
