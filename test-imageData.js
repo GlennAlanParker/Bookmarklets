@@ -280,10 +280,17 @@
         };
 
 const update = () => {
-    txt.innerHTML = "";
-    if (!items.length) { txt.textContent = "No images found."; return; }
+    // Clear only entries, but keep the scroll button
+    [...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
+
+    if (!items.length) {
+        txt.insertBefore(d.createTextNode("No images found."), scrollTopBtn);
+        return;
+    }
+
     items.forEach((it, i) => {
         const entry = d.createElement("div");
+        entry.className = "img-entry";
         entry.style.display = "flex";
         entry.style.alignItems = "flex-start";
         entry.style.padding = "4px 0";
@@ -336,18 +343,21 @@ const update = () => {
             <div><strong>Caption:</strong> ${it.caption}</div>
         `;
         entry.appendChild(infoDiv);
-        txt.appendChild(entry);
 
-        // Only add <hr> if not the last item
+        // Insert before scroll button so it stays last
+        txt.insertBefore(entry, scrollTopBtn);
+
+        // Add separator only if not the last item
         if (i < items.length - 1) {
             const hr = d.createElement("hr");
+            hr.className = "img-separator";
             Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-            txt.appendChild(hr);
+            txt.insertBefore(hr, scrollTopBtn);
         }
     });
+
     autosize();
 };
-
 
         update();
         o.append(mkbar("top"), txt, mkbar("bottom"));
