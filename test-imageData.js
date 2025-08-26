@@ -1,9 +1,7 @@
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
-
         if (window._imgData?.cleanup) window._imgData.cleanup();
-
         const d = document;
         const badges = [];
         const items = [];
@@ -24,7 +22,6 @@
             }
         };
 
-        // Gather images
         const imgs = [...d.images].filter(e => {
             const s = (e.src || "").toLowerCase();
             const alt = (e.alt || "").toLowerCase();
@@ -61,7 +58,6 @@
             badges.push({ img, box: a });
         };
 
-        // Collect image items
         for (const img of imgs) {
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
@@ -105,14 +101,13 @@
 
         updateBadgePositions();
         setTimeout(updateBadgePositions, 80);
-
         window._imgData.scrollHandler = updateBadgePositions;
         window._imgData.resizeHandler = updateBadgePositions;
         addEventListener("scroll", window._imgData.scrollHandler);
         addEventListener("resize", window._imgData.resizeHandler);
         window._imgData.interval = setInterval(updateBadgePositions, 300);
 
-        // Overlay
+        // --- Overlay ---
         const o = d.createElement("div");
         o.id = "img-data-overlay";
         window._imgData.overlay = o;
@@ -135,8 +130,6 @@
         });
 
         const headerH = 56, footerH = 28;
-
-        // Top/Bottom bars
         const mkbar = pos => {
             const b = d.createElement("div");
             Object.assign(b.style, {
@@ -151,7 +144,6 @@
                 cursor: "grab",
                 userSelect: "none"
             });
-
             if (pos === "top") {
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
@@ -182,7 +174,6 @@
                     window._imgData.badgesVisible = !window._imgData.badgesVisible;
                     badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
                 };
-
                 btns.appendChild(toggleGroup);
 
                 const x = d.createElement("div");
@@ -206,10 +197,8 @@
                 x.setAttribute("data-drag-ignore", "1");
                 x.onclick = e => { e.stopPropagation(); o.remove(); window._imgData.cleanup(); };
                 btns.appendChild(x);
-
                 b.appendChild(btns);
             }
-
             b.setAttribute("data-drag-handle", "1");
             return b;
         };
@@ -217,7 +206,7 @@
         const txt = d.createElement("div");
         Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", display: "flex", flexDirection: "column", position: "relative" });
 
-        // Scroll-to-top button
+        // Scroll button
         const scrollTopBtn = d.createElement("div");
         scrollTopBtn.textContent = "↑";
         Object.assign(scrollTopBtn.style, {
@@ -244,20 +233,60 @@
         scrollTopBtn.addEventListener("mouseleave", () => { scrollTopBtn.style.background = "#34495e"; scrollTopBtn.style.transform = "scale(1)"; });
         scrollTopBtn.addEventListener("click", () => { txt.scrollTo({ top: 0, behavior: "smooth" }); });
         txt.appendChild(scrollTopBtn);
-        txt.addEventListener("scroll", () => { scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none"; });
 
-        // Append overlay structure
+        // --- Overlay content population ---
+        const update = () => {
+            [...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
+            if (!items.length) { txt.insertBefore(d.createTextNode("No images found."), scrollTopBtn); return; }
+
+            items.forEach((it, i) => {
+                const entry = d.createElement("div");
+                entry.className = "img-entry";
+                Object.assign(entry.style, { display: "flex", alignItems: "flex-start", padding: "4px 0" });
+
+                const badgeDiv = d.createElement("div");
+                badgeDiv.style.flex = `0 0 ${badgeSize}px`;
+                badgeDiv.style.display = "flex";
+                badgeDiv.style.alignItems = "center";
+                badgeDiv.style.justifyContent = "center";
+                badgeDiv.style.paddingRight = "10px";
+
+                const link = d.createElement("a");
+                link.href = `#${it.anchorId}`;
+                link.textContent = i + 1;
+                Object.assign(link.style, { display: "flex", alignItems: "center", justifyContent: "center", background: "#FFA500", color: "#000", fontWeight: "700", fontSize: "14px", border: "2px solid #000", width: badgeSize + "px", height: badgeSize + "px", lineHeight: badgeSize + "px", textAlign: "center", userSelect: "none", textDecoration: "none", borderRadius: "4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", cursor: "pointer" });
+                link.addEventListener("click", e => { e.preventDefault(); const el = d.getElementById(it.anchorId); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
+                badgeDiv.appendChild(link);
+                entry.appendChild(badgeDiv);
+
+                const infoDiv = d.createElement("div");
+                infoDiv.style.flex = "1";
+                infoDiv.innerHTML = `<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div><div><strong>Dimensions:</strong> ${it.dim}</div><div><strong>Size:</strong> ${it.size}</div><div><strong>Alt:</strong> ${it.alt}</div><div><strong>Caption:</strong> ${it.caption}</div>`;
+                entry.appendChild(infoDiv);
+
+                txt.insertBefore(entry, scrollTopBtn);
+                if (i < items.length - 1) {
+                    const hr = d.createElement("hr");
+                    hr.className = "img-separator";
+                    Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
+                    txt.insertBefore(hr, scrollTopBtn);
+                }
+            });
+
+            const autosize = () => { const h = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight))); o.style.height = h + "px"; };
+            autosize();
+        };
+
+        update();
+        items.forEach(it => { fetch(it.url, { method: "HEAD" }).then(r => { const cl = r.headers.get("content-length"); it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown"; update(); }).catch(() => { it.size = "Error"; update(); }); });
+
+        // --- Append overlay ---
         o.append(mkbar("top"), txt, mkbar("bottom"));
         d.body.appendChild(o);
 
-        // --- Draggable header/footer logic ---
+        // --- Drag logic ---
         let drag = null;
-        const startDrag = (e) => {
-            if (e.target.closest("[data-drag-ignore]")) return;
-            const r = o.getBoundingClientRect();
-            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-            e.preventDefault();
-        };
+        const startDrag = (e) => { if (e.target.closest("[data-drag-ignore]")) return; const r = o.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; e.preventDefault(); };
         const onDrag = (e) => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
         const endDrag = () => { drag = null; };
         d.addEventListener("pointermove", onDrag);
@@ -267,21 +296,8 @@
         // --- Resizers ---
         ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
             const h = d.createElement("div");
-            Object.assign(h.style, {
-                position: "absolute",
-                width: "8px",
-                height: "8px",
-                background: "#09f",
-                opacity: "0.85",
-                zIndex: "2147483648",
-                borderRadius: "2px",
-                cursor: dir + "-resize",
-                transition: "box-shadow 0.15s, transform 0.15s"
-            });
-            if (dir.includes("n")) h.style.top = "0";
-            if (dir.includes("s")) h.style.bottom = "0";
-            if (dir.includes("e")) h.style.right = "0";
-            if (dir.includes("w")) h.style.left = "0";
+            Object.assign(h.style, { position: "absolute", width: "8px", height: "8px", background: "#09f", opacity: "0.85", zIndex: "2147483648", borderRadius: "2px", cursor: dir + "-resize", transition: "box-shadow 0.15s, transform 0.15s" });
+            if (dir.includes("n")) h.style.top = "0"; if (dir.includes("s")) h.style.bottom = "0"; if (dir.includes("e")) h.style.right = "0"; if (dir.includes("w")) h.style.left = "0";
             if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
             if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
 
@@ -294,28 +310,15 @@
                 const r = o.getBoundingClientRect();
                 let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
                 const minW = 200, minH = 140;
-
                 const onMove = me => {
-                    let dx = me.clientX - startX;
-                    let dy = me.clientY - startY;
-
-                    let newTop = startT;
-                    let newLeft = startL;
-                    let newWidth = startW;
-                    let newHeight = startH;
-
+                    let dx = me.clientX - startX; let dy = me.clientY - startY;
+                    let newTop = startT; let newLeft = startL; let newWidth = startW; let newHeight = startH;
                     if (dir.includes("e")) newWidth = Math.min(window.innerWidth - startL, Math.max(minW, startW + dx));
                     if (dir.includes("w")) { newLeft = Math.max(0, startL + dx); newWidth = Math.max(minW, (startL + startW) - newLeft); }
                     if (dir.includes("s")) { let bottom = Math.min(window.innerHeight, me.clientY); newHeight = Math.max(minH, bottom - startT); }
                     if (dir.includes("n")) { let bottom = startT + startH; newTop = Math.max(0, me.clientY); newHeight = Math.max(minH, bottom - newTop); }
-
-                    o.style.width = newWidth + "px";
-                    o.style.height = newHeight + "px";
-                    o.style.left = newLeft + "px";
-                    o.style.top = newTop + "px";
-                    o.style.right = "auto";
+                    o.style.width = newWidth + "px"; o.style.height = newHeight + "px"; o.style.left = newLeft + "px"; o.style.top = newTop + "px"; o.style.right = "auto";
                 };
-
                 const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
                 d.addEventListener("pointermove", onMove);
                 d.addEventListener("pointerup", onUp);
