@@ -153,19 +153,16 @@
             });
 
             if (pos === "top") {
-                // Title
                 const title = d.createElement("h1");
                 title.textContent = "Image Data";
                 Object.assign(title.style, { margin: 0, color: "#fff", fontSize: "16px", textAlign: "left" });
                 b.appendChild(title);
 
-                // Buttons container
                 const btns = d.createElement("div");
                 btns.style.display = "flex";
                 btns.style.alignItems = "center";
                 btns.style.gap = "8px";
 
-                // Toggle badges
                 const toggleGroup = d.createElement("div");
                 const toggleHeight = badgeSize + 6;
                 Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none", height: toggleHeight + "px" });
@@ -188,7 +185,6 @@
 
                 btns.appendChild(toggleGroup);
 
-                // Close button
                 const x = d.createElement("div");
                 x.textContent = "×";
                 Object.assign(x.style, {
@@ -245,33 +241,13 @@
             userSelect: "none"
         });
 
-        scrollTopBtn.addEventListener("mouseenter", () => {
-            scrollTopBtn.style.background = "#2c3e50";
-            scrollTopBtn.style.transform = "scale(1.1)";
-        });
-
-        scrollTopBtn.addEventListener("mouseleave", () => {
-            scrollTopBtn.style.background = "#34495e";
-            scrollTopBtn.style.transform = "scale(1)";
-        });
-
-        scrollTopBtn.addEventListener("click", () => {
-            txt.scrollTo({ top: 0, behavior: "smooth" });
-        });
-
+        scrollTopBtn.addEventListener("mouseenter", () => { scrollTopBtn.style.background = "#2c3e50"; scrollTopBtn.style.transform = "scale(1.1)"; });
+        scrollTopBtn.addEventListener("mouseleave", () => { scrollTopBtn.style.background = "#34495e"; scrollTopBtn.style.transform = "scale(1)"; });
+        scrollTopBtn.addEventListener("click", () => { txt.scrollTo({ top: 0, behavior: "smooth" }); });
         txt.appendChild(scrollTopBtn);
 
-        // Show/hide scroll to top button based on scroll position
-        const checkScroll = () => {
-            if (txt.scrollTop > 20) {
-                scrollTopBtn.style.display = "flex";
-            } else {
-                scrollTopBtn.style.display = "none";
-            }
-        };
-        
+        const checkScroll = () => { scrollTopBtn.style.display = txt.scrollTop > 20 ? "flex" : "none"; };
         txt.addEventListener("scroll", checkScroll);
-        // Also check on content updates
         setTimeout(checkScroll, 100);
 
         const autosize = () => {
@@ -284,63 +260,33 @@
             if (!items.length) { txt.textContent = "No images found."; return; }
             items.forEach((it, i) => {
                 const entry = d.createElement("div");
-                entry.style.display = "flex";
-                entry.style.alignItems = "flex-start";
-                entry.style.padding = "4px 0";
+                entry.style.display = "flex"; entry.style.alignItems = "flex-start"; entry.style.padding = "4px 0";
 
                 const badgeDiv = d.createElement("div");
                 badgeDiv.style.flex = `0 0 ${badgeSize}px`;
-                badgeDiv.style.display = "flex";
-                badgeDiv.style.alignItems = "center";
-                badgeDiv.style.justifyContent = "center";
-                badgeDiv.style.paddingRight = "10px";
+                badgeDiv.style.display = "flex"; badgeDiv.style.alignItems = "center"; badgeDiv.style.justifyContent = "center"; badgeDiv.style.paddingRight = "10px";
 
                 const link = d.createElement("a");
-                link.href = `#${it.anchorId}`;
-                link.textContent = i + 1;
+                link.href = `#${it.anchorId}`; link.textContent = i + 1;
                 Object.assign(link.style, {
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#FFA500",
-                    color: "#000",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    border: "2px solid #000",
-                    width: badgeSize + "px",
-                    height: badgeSize + "px",
-                    lineHeight: badgeSize + "px",
-                    textAlign: "center",
-                    userSelect: "none",
-                    textDecoration: "none",
-                    borderRadius: "4px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "#FFA500", color: "#000", fontWeight: "700", fontSize: "14px",
+                    border: "2px solid #000", width: badgeSize + "px", height: badgeSize + "px",
+                    lineHeight: badgeSize + "px", textAlign: "center", userSelect: "none",
+                    textDecoration: "none", borderRadius: "4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                     cursor: "pointer"
                 });
-                link.addEventListener("click", e => {
-                    e.preventDefault();
-                    const el = d.getElementById(it.anchorId);
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                });
+                link.addEventListener("click", e => { e.preventDefault(); const el = d.getElementById(it.anchorId); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
 
-                badgeDiv.appendChild(link);
-                entry.appendChild(badgeDiv);
+                badgeDiv.appendChild(link); entry.appendChild(badgeDiv);
 
-                const infoDiv = d.createElement("div");
-                infoDiv.style.flex = "1";
-                infoDiv.innerHTML = `
-                    <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
-                    <div><strong>Dimensions:</strong> ${it.dim}</div>
-                    <div><strong>Size:</strong> ${it.size}</div>
-                    <div><strong>Alt:</strong> ${it.alt}</div>
-                    <div><strong>Caption:</strong> ${it.caption}</div>
-                `;
-                entry.appendChild(infoDiv);
-                txt.appendChild(entry);
+                const infoDiv = d.createElement("div"); infoDiv.style.flex = "1";
+                infoDiv.innerHTML = `<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
+                <div><strong>Dimensions:</strong> ${it.dim}</div><div><strong>Size:</strong> ${it.size}</div>
+                <div><strong>Alt:</strong> ${it.alt}</div><div><strong>Caption:</strong> ${it.caption}</div>`;
+                entry.appendChild(infoDiv); txt.appendChild(entry);
 
-                const hr = d.createElement("hr");
-                Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-                txt.appendChild(hr);
+                const hr = d.createElement("hr"); Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" }); txt.appendChild(hr);
             });
             autosize();
         };
@@ -350,136 +296,65 @@
         d.body.appendChild(o);
 
         items.forEach(it => {
-            fetch(it.url, { method: "HEAD" })
-                .then(r => {
-                    const cl = r.headers.get("content-length");
-                    it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-                    update();
-                })
-                .catch(() => { it.size = "Error"; update(); });
+            fetch(it.url, { method: "HEAD" }).then(r => {
+                const cl = r.headers.get("content-length");
+                it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+                update();
+            }).catch(() => { it.size = "Error"; update(); });
         });
 
         setTimeout(() => { updateBadgePositions(); autosize(); }, 150);
 
         // Drag logic
         let drag = null;
-        const startDrag = (e) => {
-            if (e.target.closest("[data-drag-ignore]")) return;
-            const r = o.getBoundingClientRect();
-            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-            // ensure explicit left/top when starting drag so moves are consistent
-            o.style.left = r.left + "px";
-            o.style.top = r.top + "px";
-            o.style.right = "auto";
-            e.target.setPointerCapture?.(e.pointerId);
-            e.preventDefault();
-        };
-        const onDrag = (e) => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
+        const startDrag = e => { if (e.target.closest("[data-drag-ignore]")) return; const r = o.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; e.preventDefault(); };
+        const onDrag = e => { if (!drag) return; o.style.left = (e.clientX - drag.dx) + "px"; o.style.top = (e.clientY - drag.dy) + "px"; o.style.right = "auto"; };
         const endDrag = () => { drag = null; };
-        d.addEventListener("pointermove", onDrag);
-        d.addEventListener("pointerup", endDrag);
+        d.addEventListener("pointermove", onDrag); d.addEventListener("pointerup", endDrag);
         d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-        // New: Robust resizer logic that clamps to viewport and handles all edges/corners
-        (function addResizers() {
-            const minW = 200, minH = 100;
-            const dirs = ["n","s","e","w","ne","nw","se","sw"];
-            dirs.forEach(dir => {
-                const h = d.createElement("div");
-                Object.assign(h.style, {
-                    position: "absolute",
-                    width: "12px",
-                    height: "12px",
-                    background: "#09f",
-                    opacity: "0.85",
-                    zIndex: "2147483648",
-                    borderRadius: "2px",
-                    cursor: `${dir}-resize`,
-                    transition: "box-shadow 0.15s, transform 0.15s",
-                    pointerEvents: "auto"
-                });
-                // Positioning: keep handles slightly outside the box for easy grabbing
-                const off = -6 + "px";
-                if (dir.includes("n")) h.style.top = off;
-                if (dir.includes("s")) h.style.bottom = off;
-                if (dir.includes("e")) h.style.right = off;
-                if (dir.includes("w")) h.style.left = off;
-                if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-6px"; }
-                if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-6px"; }
-
-                h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
-                h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
-
-                h.addEventListener("pointerdown", e => {
-                    e.preventDefault(); e.stopPropagation();
-                    try { h.setPointerCapture?.(e.pointerId); } catch {}
-                    const r = o.getBoundingClientRect();
-                    const startX = e.clientX, startY = e.clientY;
-                    const startW = r.width, startH = r.height, startL = r.left, startT = r.top;
-                    // ensure explicit left/top before resizing
-                    o.style.left = startL + "px";
-                    o.style.top = startT + "px";
-                    o.style.right = "auto";
-
-                    const onMove = me => {
-                        const dx = me.clientX - startX, dy = me.clientY - startY;
-                        const vw = innerWidth, vh = innerHeight;
-
-                        let newW = startW, newH = startH, newL = startL, newT = startT;
-
-                        // east (right edge)
-                        if (dir.includes("e")) {
-                            newW = Math.min(Math.max(minW, startW + dx), Math.max(minW, vw - startL));
-                        }
-
-                        // south (bottom edge)
-                        if (dir.includes("s")) {
-                            newH = Math.min(Math.max(minH, startH + dy), Math.max(minH, vh - startT));
-                        }
-
-                        // west (left edge) - left moves, width adjusts
-                        if (dir.includes("w")) {
-                            newW = startW - dx;
-                            newL = startL + dx;
-                            // clamp left to 0
-                            if (newL < 0) { newW += newL; newL = 0; }
-                            // enforce minimum width
-                            if (newW < minW) { newL = startL + (startW - minW); newW = minW; if (newL < 0) { newW += newL; newL = 0; } }
-                            // don't exceed viewport
-                            newW = Math.min(newW, vw - newL);
-                        }
-
-                        // north (top edge) - top moves, height adjusts
-                        if (dir.includes("n")) {
-                            newH = startH - dy;
-                            newT = startT + dy;
-                            if (newT < 0) { newH += newT; newT = 0; }
-                            if (newH < minH) { newT = startT + (startH - minH); newH = minH; if (newT < 0) { newH += newT; newT = 0; } }
-                            newH = Math.min(newH, vh - newT);
-                        }
-
-                        o.style.width = Math.round(Math.max(minW, newW)) + "px";
-                        o.style.height = Math.round(Math.max(minH, newH)) + "px";
-                        o.style.left = Math.round(Math.max(0, newL)) + "px";
-                        o.style.top = Math.round(Math.max(0, newT)) + "px";
-                        o.style.right = "auto";
-                        // update internal layout after a tiny debounce
-                        setTimeout(() => { updateBadgePositions(); }, 10);
-                    };
-
-                    const onUp = up => {
-                        try { h.releasePointerCapture?.(up.pointerId); } catch {}
-                        d.removeEventListener("pointermove", onMove);
-                        d.removeEventListener("pointerup", onUp);
-                    };
-
-                    d.addEventListener("pointermove", onMove);
-                    d.addEventListener("pointerup", onUp);
-                });
-
-                o.appendChild(h);
+        // Resizers with full viewport expansion
+        ["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
+            const h = d.createElement("div");
+            Object.assign(h.style, {
+                position: "absolute", width: "8px", height: "8px", background: "#09f",
+                opacity: "0.85", zIndex: "2147483648", borderRadius: "2px",
+                cursor: dir + "-resize", transition: "box-shadow 0.15s, transform 0.15s"
             });
-        })();
+            if (dir.includes("n")) h.style.top = "0";
+            if (dir.includes("s")) h.style.bottom = "0";
+            if (dir.includes("e")) h.style.right = "0";
+            if (dir.includes("w")) h.style.left = "0";
+            if (["n","s"].includes(dir)) { h.style.left = "50%"; h.style.marginLeft = "-4px"; }
+            if (["e","w"].includes(dir)) { h.style.top = "50%"; h.style.marginTop = "-4px"; }
+
+            h.addEventListener("mouseenter", () => { h.style.boxShadow = "0 0 8px 2px rgba(0,150,255,0.9)"; h.style.transform = "scale(1.2)"; });
+            h.addEventListener("mouseleave", () => { h.style.boxShadow = "none"; h.style.transform = "scale(1)"; });
+
+            h.addEventListener("pointerdown", e => {
+                e.preventDefault(); e.stopPropagation();
+                let startX = e.clientX, startY = e.clientY;
+                const r = o.getBoundingClientRect();
+                let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
+
+                const onMove = me => {
+                    let dx = me.clientX - startX, dy = me.clientY - startY;
+                    let w = startW, hH = startH, l = startL, t = startT;
+
+                    if (dir.includes("e")) w = Math.max(200, Math.min(startW + dx, innerWidth - startL));
+                    if (dir.includes("s")) hH = Math.max(100, Math.min(startH + dy, innerHeight - startT));
+                    if (dir.includes("w")) { w = Math.max(200, startW - dx); l = startL + dx; if (l < 0) { w += l; l = 0; } }
+                    if (dir.includes("n")) { hH = Math.max(100, startH - dy); t = Math.max(0, startT + dy); if (t === 0) { hH = startH + startT; } }
+
+                    o.style.width = w + "px"; o.style.height = hH + "px"; o.style.left = l + "px"; o.style.top = t + "px"; o.style.right = "auto";
+                };
+
+                const onUp = () => { d.removeEventListener("pointermove", onMove); d.removeEventListener("pointerup", onUp); };
+                d.addEventListener("pointermove", onMove); d.addEventListener("pointerup", onUp);
+            });
+
+            o.appendChild(h);
+        });
 
     } catch (e) { console.error(e); }
 })();
