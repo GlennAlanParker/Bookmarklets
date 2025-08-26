@@ -122,7 +122,7 @@
             right: "0",
             width: "520px",
             height: "240px",
-            maxHeight: "90vh",
+            maxHeight: "95vh",
             display: "flex",
             flexDirection: "column",
             background: "#f8f9fa",
