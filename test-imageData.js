@@ -250,7 +250,14 @@ Object.assign(x.style, {
         };
 
         const txt = d.createElement("div");
-        Object.assign(txt.style, { padding: "10px", overflow: "auto", flex: "1", background: "#fff", position: "relative" });
+        Object.assign(txt.style, { 
+        padding: "10px", 
+        overflow: "auto", 
+        flex: "1", 
+        background: "#fff", 
+        position: "relative",
+        textAlign: "left"   // <-- add this line
+        });
 
         // Scroll to top button - positioned fixed relative to overlay
         const scrollTopBtn = d.createElement("div");
