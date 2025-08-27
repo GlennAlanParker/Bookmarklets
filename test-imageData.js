@@ -192,21 +192,21 @@
                 // Close button
                 const x = d.createElement("div");
                 x.textContent = "×";
-                Object.assign(x.style, {
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    padding: "0",
-                    margin: "0 0 0 12px",
-                    borderRadius: "50%",
-                    width: (badgeSize + 6) + "px",
-                    height: (badgeSize + 6) + "px",
-                    background: "#e74c3c",
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
-                });
+Object.assign(x.style, {
+    cursor: "pointer",
+    fontSize: "14px",     // smaller × character
+    padding: "0",
+    margin: "0 0 0 12px",
+    borderRadius: "50%",
+    width: "20px",        // fixed size
+    height: "20px",
+    background: "#e74c3c",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+});
                 x.title = "Close";
                 x.setAttribute("data-drag-ignore", "1");
                 x.onclick = e => { e.stopPropagation(); o.remove(); window._imgData.cleanup(); };
