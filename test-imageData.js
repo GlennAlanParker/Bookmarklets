@@ -139,18 +139,19 @@
         // Top/Bottom bars
         const mkbar = pos => {
             const b = d.createElement("div");
-            Object.assign(b.style, {
-                height: pos === "top" ? headerH + "px" : footerH + "px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: pos === "top" ? "space-between" : "flex-end",
-                padding: "6px 10px",
-                background: "#34495e",
-                color: "#fff",
-                fontWeight: 700,
-                cursor: "grab",
-                userSelect: "none"
-            });
+Object.assign(b.style, {
+    height: pos === "top" ? headerH + "px" : footerH + "px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: pos === "top" ? "space-between" : "flex-end",
+    padding: pos === "top" ? "6px 10px" : "2px 8px",  // smaller padding for footer
+    background: "#34495e",
+    color: "#fff",
+    fontWeight: 700,
+    cursor: "grab",
+    userSelect: "none"
+});
+
 
             if (pos === "top") {
                 // Title
