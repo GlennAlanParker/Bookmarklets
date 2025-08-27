@@ -1,4 +1,3 @@
-
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
@@ -67,7 +66,7 @@
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
             img.id = `imgData_${n}`;
-            const caption = (img.closest("figure")?.querySelector("figcaption")?.textContent || "").trim() || "None";
+            const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim() || "None";
             items.push({
                 name,
                 dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
