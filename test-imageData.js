@@ -134,7 +134,7 @@
             overflow: "hidden"
         });
 
-        const headerH = 56, footerH = 28;
+        const headerH = 56, footerH = 14;
 
         // Top/Bottom bars
         const mkbar = pos => {
