@@ -69,15 +69,23 @@
 const caption = (() => {
     const figcap = img.closest("figure")?.querySelector("figcaption");
     if (!figcap) return "";
-    // Only include visible text nodes
-    let text = "";
-    figcap.childNodes.forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-            text += node.textContent;
+    // Get only visible text
+    const walker = document.createTreeWalker(figcap, NodeFilter.SHOW_TEXT, {
+        acceptNode: node => {
+            if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+            const style = getComputedStyle(node.parentElement);
+            if (style.display === "none" || style.visibility === "hidden") return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
         }
     });
+    let text = "";
+    let node;
+    while (node = walker.nextNode()) {
+        text += node.textContent + " ";
+    }
     return text.replace(/\s+/g, ' ').trim();
 })();
+
 
 
             items.push({
