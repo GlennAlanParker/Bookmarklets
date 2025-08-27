@@ -67,32 +67,21 @@
             if (!name) continue;
             img.id = `imgData_${n}`;
 const caption = (() => {
-    if (!img) return "";
+    if (!figcap) return "";  // No caption
 
-    // Try to find figcaption near the image
-    let figcap = img.closest("figure")?.querySelector("figcaption");
-
-    // If not found in figure, try sibling
-    if (!figcap && img.parentElement) {
-        figcap = Array.from(img.parentElement.children)
-            .find(el => el.tagName.toLowerCase() === "figcaption");
-    }
-
-    if (!figcap) return "";
-
-    // Use TreeWalker to get only visible text nodes
-    const walker = document.createTreeWalker(figcap, NodeFilter.SHOW_TEXT, {
-        acceptNode: node => {
-            if (!node.parentElement) return NodeFilter.FILTER_REJECT;
-            const style = getComputedStyle(node.parentElement);
-            if (
-                style.display === "none" ||
-                style.visibility === "hidden" ||
-                style.opacity === "0"
-            ) return NodeFilter.FILTER_REJECT;
-            return NodeFilter.FILTER_ACCEPT;
+    // Get only visible text nodes
+    const walker = document.createTreeWalker(
+        figcap,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: node => {
+                if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+                const style = getComputedStyle(node.parentElement);
+                if (style.display === "none" || style.visibility === "hidden") return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
         }
-    });
+    );
 
     let text = "";
     let node;
@@ -100,7 +89,7 @@ const caption = (() => {
         text += node.textContent + " ";
     }
 
-    return text.replace(/\s+/g, " ").trim();
+    return text.replace(/\s+/g, ' ').trim();  // final caption string
 })();
 
 
