@@ -1,4 +1,3 @@
-
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
@@ -255,38 +254,37 @@ Object.assign(x.style, {
         // Scroll to top button - positioned fixed relative to overlay
         const scrollTopBtn = d.createElement("div");
         scrollTopBtn.textContent = "↑";
-        Object.assign(scrollTopBtn.style, {
-            position: "absolute",
-            bottom: "10px",
-            right: "10px",
-            width: "30px",
-            height: "30px",
-            background: "#34495e",
-            color: "#fff",
-            display: "none",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "50%",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: "bold",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-            zIndex: "10",
-            transition: "all 0.2s ease",
-            userSelect: "none",
-            pointerEvents: "auto"
-        });
+Object.assign(scrollTopBtn.style, {
+    position: "absolute",
+    bottom: "10px",
+    right: "10px",
+    width: "30px",
+    height: "30px",
+    background: "#FFA500",        // match badge accent orange
+    color: "#000",                // dark text for contrast
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "50%",
+    cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: "bold",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+    zIndex: "10",
+    transition: "all 0.2s ease",
+    userSelect: "none",
+    pointerEvents: "auto"
+});
 
-        // Hover effect
-        scrollTopBtn.addEventListener("mouseenter", () => {
-            scrollTopBtn.style.background = "#2c3e50";
-            scrollTopBtn.style.transform = "scale(1.1)";
-        });
-        scrollTopBtn.addEventListener("mouseleave", () => {
-            scrollTopBtn.style.background = "#34495e";
-            scrollTopBtn.style.transform = "scale(1)";
-        });
-
+// Hover effect
+scrollTopBtn.addEventListener("mouseenter", () => {
+    scrollTopBtn.style.background = "#e67e22"; // darker orange hover
+    scrollTopBtn.style.transform = "scale(1.1)";
+});
+scrollTopBtn.addEventListener("mouseleave", () => {
+    scrollTopBtn.style.background = "#FFA500";
+    scrollTopBtn.style.transform = "scale(1)";
+});
         // Click to scroll to top
         scrollTopBtn.addEventListener("click", () => {
             txt.scrollTo({ top: 0, behavior: "smooth" });
