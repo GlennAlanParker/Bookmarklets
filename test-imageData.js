@@ -172,7 +172,7 @@ const toggleHeight = badgeSize + 6;
 Object.assign(toggleGroup.style, { 
     display: "flex",
     alignItems: "center",
-    background: "#1abc9c",        // teal base
+    background: "#5D6D7E",        // muted slate blue
     color: "#fff",
     borderRadius: "6px",
     padding: "2px 6px",
@@ -196,7 +196,7 @@ Object.assign(toggleBtn.style, {
     background: "transparent", 
     fontSize: "14px", 
     cursor: "pointer", 
-    color: "#fff"   // matches teal contrast
+    color: "#fff"
 });
 toggleGroup.appendChild(toggleBtn);
 
@@ -209,11 +209,11 @@ toggleGroup.onclick = e => {
 
 // Hover effects
 toggleGroup.addEventListener("mouseenter", () => {
-    toggleGroup.style.background = "#16a085"; // deeper teal
+    toggleGroup.style.background = "#4A5A6A"; // slightly darker
     toggleGroup.style.transform = "scale(1.05)";
 });
 toggleGroup.addEventListener("mouseleave", () => {
-    toggleGroup.style.background = "#1abc9c";
+    toggleGroup.style.background = "#5D6D7E";
     toggleGroup.style.transform = "scale(1)";
 });
 
