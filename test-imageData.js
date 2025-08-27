@@ -31,35 +31,32 @@
             return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
         });
 
-        const createBadge = (img, index) => {
-            const a = d.createElement("a");
-            a.href = img.src;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.textContent = index;
-            Object.assign(a.style, {
-                position: "absolute",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#FFA500",
-                color: "#000",
-                fontWeight: "700",
-                fontSize: "14px",
-                border: "2px solid #000",
-                width: badgeSize + "px",
-                height: badgeSize + "px",
-                lineHeight: badgeSize + "px",
-                textAlign: "center",
-                userSelect: "none",
-                cursor: "pointer",
-                borderRadius: "4px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                zIndex: 2147483648,
-            });
-            d.body.appendChild(a);
-            badges.push({ img, box: a });
-        };
+const createBadge = (img, index) => {
+    const badge = d.createElement("div"); // was <a>
+    badge.textContent = index;
+    Object.assign(badge.style, {
+        position: "absolute",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#FFA500",
+        color: "#000",
+        fontWeight: "700",
+        fontSize: "14px",
+        border: "2px solid #000",
+        width: badgeSize + "px",
+        height: badgeSize + "px",
+        lineHeight: badgeSize + "px",
+        textAlign: "center",
+        userSelect: "none",
+        cursor: "default",   // not a link anymore
+        borderRadius: "4px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+        zIndex: 2147483648,
+    });
+    d.body.appendChild(badge);
+    badges.push({ img, box: badge });
+};
 
         // Collect item data
         for (const img of imgs) {
@@ -359,25 +356,25 @@ const update = () => {
         const link = d.createElement("a");
         link.href = `#${it.anchorId}`;
         link.textContent = i + 1;
-        Object.assign(link.style, {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#FFA500",
-            color: "#000",
-            fontWeight: "700",
-            fontSize: "14px",
-            border: "2px solid #000",
-            width: badgeSize + "px",
-            height: badgeSize + "px",
-            lineHeight: badgeSize + "px",
-            textAlign: "center",
-            userSelect: "none",
-            textDecoration: "none",
-            borderRadius: "4px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-            cursor: "pointer"
-        });
+Object.assign(link.style, {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#FFA500",
+    color: "#000",
+    fontWeight: "700",
+    fontSize: "14px",
+    border: "2px solid #000",
+    width: badgeSize + "px",
+    height: badgeSize + "px",
+    lineHeight: badgeSize + "px",
+    textAlign: "center",
+    userSelect: "none",
+    textDecoration: "underline",   // 👈 add underline
+    borderRadius: "4px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+    cursor: "pointer"
+});
         link.addEventListener("click", e => {
             e.preventDefault();
             const el = d.getElementById(it.anchorId);
