@@ -388,6 +388,7 @@ const update = () => {
 
         const infoDiv = d.createElement("div");
         infoDiv.style.flex = "1";
+        infoDiv.style.textAlign = "left"; 
         infoDiv.innerHTML = `
             <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
             <div><strong>Dimensions:</strong> ${it.dim}</div>
