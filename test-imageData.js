@@ -256,7 +256,8 @@ Object.assign(x.style, {
         flex: "1", 
         background: "#fff", 
         position: "relative",
-        textAlign: "left"   // <-- add this line
+        textAlign: "left",
+        color: "#333333"
         });
 
         // Scroll to top button - positioned fixed relative to overlay
