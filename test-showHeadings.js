@@ -166,77 +166,47 @@
                 btns.style.alignItems = "center";
                 btns.style.gap = "8px";
 
-// Toggle badges
-const toggleGroup = d.createElement("div");
-const toggleHeight = badgeSize + 6;
-Object.assign(toggleGroup.style, { 
-    display: "flex",
-    alignItems: "center",
-    background: "#5D6D7E",        // muted slate blue
-    color: "#fff",
-    borderRadius: "6px",
-    padding: "2px 6px",
-    cursor: "pointer",
-    userSelect: "none",
-    height: toggleHeight + "px",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-    transition: "background 0.2s ease, transform 0.2s ease"
-});
+                // Toggle badges
+                const toggleGroup = d.createElement("div");
+                const toggleHeight = badgeSize + 6;
+                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none", height: toggleHeight + "px" });
+                const label = d.createElement("span");
+                label.textContent = "Toggle Badges";
+                Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
+                toggleGroup.appendChild(label);
 
-const label = d.createElement("span");
-label.textContent = "Toggle Badges";
-Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
-toggleGroup.appendChild(label);
+                const toggleBtn = d.createElement("button");
+                toggleBtn.textContent = "🔢";
+                toggleBtn.title = "Toggle Number Badges";
+                Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
+                toggleGroup.appendChild(toggleBtn);
 
-const toggleBtn = d.createElement("button");
-toggleBtn.textContent = "🔢";
-toggleBtn.title = "Toggle Number Badges";
-Object.assign(toggleBtn.style, { 
-    border: "none", 
-    background: "transparent", 
-    fontSize: "14px", 
-    cursor: "pointer", 
-    color: "#fff"
-});
-toggleGroup.appendChild(toggleBtn);
+                toggleGroup.onclick = e => {
+                    e.stopPropagation();
+                    window._imgData.badgesVisible = !window._imgData.badgesVisible;
+                    badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
+                };
 
-// Toggle action
-toggleGroup.onclick = e => {
-    e.stopPropagation();
-    window._imgData.badgesVisible = !window._imgData.badgesVisible;
-    badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
-};
-
-// Hover effects
-toggleGroup.addEventListener("mouseenter", () => {
-    toggleGroup.style.background = "#4A5A6A"; // slightly darker
-    toggleGroup.style.transform = "scale(1.05)";
-});
-toggleGroup.addEventListener("mouseleave", () => {
-    toggleGroup.style.background = "#5D6D7E";
-    toggleGroup.style.transform = "scale(1)";
-});
-
-btns.appendChild(toggleGroup);
+                btns.appendChild(toggleGroup);
 
                 // Close button
                 const x = d.createElement("div");
                 x.textContent = "×";
-Object.assign(x.style, {
-    cursor: "pointer",
-    fontSize: "14px",     // smaller × character
-    padding: "0",
-    margin: "0 0 0 12px",
-    borderRadius: "50%",
-    width: "20px",        // fixed size
-    height: "20px",
-    background: "#e74c3c",
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
-});
+                Object.assign(x.style, {
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    padding: "0",
+                    margin: "0 0 0 12px",
+                    borderRadius: "50%",
+                    width: (badgeSize + 6) + "px",
+                    height: (badgeSize + 6) + "px",
+                    background: "#e74c3c",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+                });
                 x.title = "Close";
                 x.setAttribute("data-drag-ignore", "1");
                 x.onclick = e => { e.stopPropagation(); o.remove(); window._imgData.cleanup(); };
