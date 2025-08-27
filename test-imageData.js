@@ -261,6 +261,8 @@ Object.assign(scrollTopBtn.style, {
     right: "10px",
     width: "30px",
     height: "30px",
+    marginRight: "10px",
+    marginBottom: "10px",
     background: "#FFA500",        // match badge accent orange
     color: "#000",                // dark text for contrast
     display: "none",
