@@ -66,11 +66,19 @@
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
             img.id = `imgData_${n}`;
-           const caption = (() => {
+const caption = (() => {
     const figcap = img.closest("figure")?.querySelector("figcaption");
-    if (!figcap) return "None";
-    return figcap.textContent.replace(/\s+/g, ' ').trim() || "None";
+    if (!figcap) return "";
+    // Only include visible text nodes
+    let text = "";
+    figcap.childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            text += node.textContent;
+        }
+    });
+    return text.replace(/\s+/g, ' ').trim();
 })();
+
 
             items.push({
                 name,
