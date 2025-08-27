@@ -166,28 +166,58 @@
                 btns.style.alignItems = "center";
                 btns.style.gap = "8px";
 
-                // Toggle badges
-                const toggleGroup = d.createElement("div");
-                const toggleHeight = badgeSize + 6;
-                Object.assign(toggleGroup.style, { display: "flex", alignItems: "center", background: "#95a5a6", borderRadius: "6px", padding: "2px 6px", cursor: "pointer", userSelect: "none", height: toggleHeight + "px" });
-                const label = d.createElement("span");
-                label.textContent = "Toggle Badges";
-                Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
-                toggleGroup.appendChild(label);
+// Toggle badges
+const toggleGroup = d.createElement("div");
+const toggleHeight = badgeSize + 6;
+Object.assign(toggleGroup.style, { 
+    display: "flex",
+    alignItems: "center",
+    background: "#1abc9c",        // teal base
+    color: "#fff",
+    borderRadius: "6px",
+    padding: "2px 6px",
+    cursor: "pointer",
+    userSelect: "none",
+    height: toggleHeight + "px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+    transition: "background 0.2s ease, transform 0.2s ease"
+});
 
-                const toggleBtn = d.createElement("button");
-                toggleBtn.textContent = "🔢";
-                toggleBtn.title = "Toggle Number Badges";
-                Object.assign(toggleBtn.style, { border: "none", background: "transparent", fontSize: "14px", cursor: "pointer" });
-                toggleGroup.appendChild(toggleBtn);
+const label = d.createElement("span");
+label.textContent = "Toggle Badges";
+Object.assign(label.style, { fontSize: "12px", marginRight: "6px" });
+toggleGroup.appendChild(label);
 
-                toggleGroup.onclick = e => {
-                    e.stopPropagation();
-                    window._imgData.badgesVisible = !window._imgData.badgesVisible;
-                    badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
-                };
+const toggleBtn = d.createElement("button");
+toggleBtn.textContent = "🔢";
+toggleBtn.title = "Toggle Number Badges";
+Object.assign(toggleBtn.style, { 
+    border: "none", 
+    background: "transparent", 
+    fontSize: "14px", 
+    cursor: "pointer", 
+    color: "#fff"   // matches teal contrast
+});
+toggleGroup.appendChild(toggleBtn);
 
-                btns.appendChild(toggleGroup);
+// Toggle action
+toggleGroup.onclick = e => {
+    e.stopPropagation();
+    window._imgData.badgesVisible = !window._imgData.badgesVisible;
+    badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
+};
+
+// Hover effects
+toggleGroup.addEventListener("mouseenter", () => {
+    toggleGroup.style.background = "#16a085"; // deeper teal
+    toggleGroup.style.transform = "scale(1.05)";
+});
+toggleGroup.addEventListener("mouseleave", () => {
+    toggleGroup.style.background = "#1abc9c";
+    toggleGroup.style.transform = "scale(1)";
+});
+
+btns.appendChild(toggleGroup);
 
                 // Close button
                 const x = d.createElement("div");
