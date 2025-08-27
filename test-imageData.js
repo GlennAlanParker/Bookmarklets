@@ -1,3 +1,4 @@
+
 (() => {
     try {
         const LSK = "imgDataOverlay_v1";
@@ -66,35 +67,7 @@
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
             img.id = `imgData_${n}`;
-const caption = (() => {
-    if (!figcap) return "";  // No caption
-
-    // Get only visible text nodes
-    const walker = document.createTreeWalker(
-        figcap,
-        NodeFilter.SHOW_TEXT,
-        {
-            acceptNode: node => {
-                if (!node.parentElement) return NodeFilter.FILTER_REJECT;
-                const style = getComputedStyle(node.parentElement);
-                if (style.display === "none" || style.visibility === "hidden") return NodeFilter.FILTER_REJECT;
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        }
-    );
-
-    let text = "";
-    let node;
-    while (node = walker.nextNode()) {
-        text += node.textContent + " ";
-    }
-
-    return text.replace(/\s+/g, ' ').trim();  // final caption string
-})();
-
-
-
-
+            const caption = (img.closest("figure")?.querySelector("figcaption")?.textContent || "").trim() || "None";
             items.push({
                 name,
                 dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
@@ -285,10 +258,12 @@ Object.assign(x.style, {
         scrollTopBtn.textContent = "↑";
 Object.assign(scrollTopBtn.style, {
     position: "absolute",
-    bottom: "20px",
-    right: "20px",
+    bottom: "10px",
+    right: "10px",
     width: "30px",
     height: "30px",
+    marginRight: "10px",
+    marginBottom: "10px",
     background: "#FFA500",        // match badge accent orange
     color: "#000",                // dark text for contrast
     display: "none",
