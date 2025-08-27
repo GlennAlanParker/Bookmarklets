@@ -63,7 +63,7 @@ const createBadge = (img, index) => {
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
             img.id = `imgData_${n}`;
-            const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim() || "None";
+            const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
             items.push({
                 name,
                 dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
@@ -387,13 +387,13 @@ Object.assign(link.style, {
         const infoDiv = d.createElement("div");
         infoDiv.style.flex = "1";
         infoDiv.style.textAlign = "left"; 
-        infoDiv.innerHTML = `
-            <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
-            <div><strong>Dimensions:</strong> ${it.dim}</div>
-            <div><strong>Size:</strong> ${it.size}</div>
-            <div><strong>Alt:</strong> ${it.alt}</div>
-            <div><strong>Caption:</strong> ${it.caption}</div>
-        `;
+infoDiv.innerHTML = `
+    <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
+    <div><strong>Dimensions:</strong> ${it.dim}</div>
+    <div><strong>Size:</strong> ${it.size}</div>
+    <div><strong>Alt:</strong> ${it.alt}</div>
+    ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
+`;
         entry.appendChild(infoDiv);
 
         txt.appendChild(entry);
