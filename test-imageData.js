@@ -66,7 +66,12 @@
             const name = (img.src.split("/").pop().split("?")[0]) || "";
             if (!name) continue;
             img.id = `imgData_${n}`;
-            const caption = (img.closest("figure")?.querySelector("figcaption")?.textContent || "").trim() || "None";
+           const caption = (() => {
+    const figcap = img.closest("figure")?.querySelector("figcaption");
+    if (!figcap) return "None";
+    return figcap.textContent.replace(/\s+/g, ' ').trim() || "None";
+})();
+
             items.push({
                 name,
                 dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
