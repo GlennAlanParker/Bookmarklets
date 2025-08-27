@@ -257,12 +257,10 @@ Object.assign(x.style, {
         scrollTopBtn.textContent = "↑";
 Object.assign(scrollTopBtn.style, {
     position: "absolute",
-    bottom: "10px",
-    right: "10px",
+    bottom: "20px",
+    right: "20px",
     width: "30px",
     height: "30px",
-    marginRight: "10px",
-    marginBottom: "10px",
     background: "#FFA500",        // match badge accent orange
     color: "#000",                // dark text for contrast
     display: "none",
