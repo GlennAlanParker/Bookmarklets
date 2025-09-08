@@ -66,21 +66,23 @@
 			});
 		};
 
-		// Collect item data
-		for (const img of imgs) {
-			const name = (img.src.split("/").pop().split("?")[0]) || "";
-			if (!name) continue;
-			img.id = `imgData_${n}`;
-			const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
-const rect = img.getBoundingClientRect();
-items.push({
-  name,
-  dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${Math.round(rect.width)}×${Math.round(rect.height)} rendered`,
-  size: "Fetching...",
-  alt: img.alt || "None",
-  caption,
-  url: img.currentSrc || img.src,
-  anchorId: img.id
+document.querySelectorAll("img").forEach(img => {
+  // prefer <a href="..."> if present
+  const anchor = img.closest("a[href]");
+  const url = anchor ? anchor.href : (img.currentSrc || img.src);
+
+  const rect = img.getBoundingClientRect();
+  const caption = img.closest("figure")?.querySelector("figcaption")?.innerText || "";
+
+  items.push({
+    name: img.alt || url.split("/").pop(),
+    dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${Math.round(rect.width)}×${Math.round(rect.height)} rendered`,
+    size: "Fetching...",
+    alt: img.alt || "None",
+    caption,
+    url,
+    anchorId: img.id
+  });
 });
 
 			createBadge(img, n);
