@@ -64,15 +64,17 @@ const createBadge = (img, index) => {
             if (!name) continue;
             img.id = `imgData_${n}`;
             const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
-            items.push({
-                name,
-                dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
-                size: "Fetching...",
-                alt: img.alt || "None",
-                caption,
-                url: img.src,
-                anchorId: img.id
-            });
+            const rect = img.getBoundingClientRect();
+const rendered = `${Math.round(rect.width)}×${Math.round(rect.height)}`;
+items.push({
+    name,
+    dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${rendered} rendered`,
+    size: "Fetching...",
+    alt: img.alt || "None",
+    caption,
+    url: img.src,
+    anchorId: img.id
+});
             createBadge(img, n);
             n++;
         }
