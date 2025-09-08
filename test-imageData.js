@@ -452,20 +452,32 @@ items.push({
 		o.append(mkbar("top"), txt, mkbar("bottom"));
 		d.body.appendChild(o);
 
-		items.forEach(it => {
-			fetch(it.url, {
-					method: "HEAD"
-				})
-				.then(r => {
-					const cl = r.headers.get("content-length");
-					it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-					update();
-				})
-				.catch(() => {
-					it.size = "Error";
-					update();
-				});
-		});
+items.forEach(it => {
+  const url = it.url;
+
+  // Try HEAD first
+  fetch(url, { method: "HEAD" })
+    .then(r => {
+      let cl = r.headers.get("content-length");
+      if (cl) {
+        it.size = (cl/1024).toFixed(1) + " KB";
+        update();
+        return;
+      }
+      // If no content-length, fall back to GET (CORS required)
+      return fetch(url)
+        .then(resp => resp.arrayBuffer())
+        .then(buf => {
+          it.size = (buf.byteLength/1024).toFixed(1) + " KB";
+          update();
+        });
+    })
+    .catch(err => {
+      it.size = "Unknown (CORS?)";
+      update();
+    });
+});
+
 
 		setTimeout(() => {
 			updateBadgePositions();
