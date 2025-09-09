@@ -66,25 +66,21 @@
 			});
 		};
 
-document.querySelectorAll("img").forEach(img => {
-  // prefer <a href="..."> if present
-  const anchor = img.closest("a[href]");
-  const url = anchor ? anchor.href : (img.currentSrc || img.src);
-
-  const rect = img.getBoundingClientRect();
-  const caption = img.closest("figure")?.querySelector("figcaption")?.innerText || "";
-
-  items.push({
-    name: img.alt || url.split("/").pop(),
-    dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${Math.round(rect.width)}×${Math.round(rect.height)} rendered`,
-    size: "Fetching...",
-    alt: img.alt || "None",
-    caption,
-    url,
-    anchorId: img.id
-  });
-});
-
+		// Collect item data
+		for (const img of imgs) {
+			const name = (img.src.split("/").pop().split("?")[0]) || "";
+			if (!name) continue;
+			img.id = `imgData_${n}`;
+			const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
+			items.push({
+				name,
+				dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
+				size: "Fetching...",
+				alt: img.alt || "None",
+				caption,
+				url: img.src,
+				anchorId: img.id
+			});
 			createBadge(img, n);
 			n++;
 		}
@@ -454,32 +450,20 @@ document.querySelectorAll("img").forEach(img => {
 		o.append(mkbar("top"), txt, mkbar("bottom"));
 		d.body.appendChild(o);
 
-items.forEach(it => {
-  const url = it.url;
-
-  // Try HEAD first
-  fetch(url, { method: "HEAD" })
-    .then(r => {
-      let cl = r.headers.get("content-length");
-      if (cl) {
-        it.size = (cl/1024).toFixed(1) + " KB";
-        update();
-        return;
-      }
-      // If no content-length, fall back to GET (CORS required)
-      return fetch(url)
-        .then(resp => resp.arrayBuffer())
-        .then(buf => {
-          it.size = (buf.byteLength/1024).toFixed(1) + " KB";
-          update();
-        });
-    })
-    .catch(err => {
-      it.size = "Unknown (CORS?)";
-      update();
-    });
-});
-
+		items.forEach(it => {
+			fetch(it.url, {
+					method: "HEAD"
+				})
+				.then(r => {
+					const cl = r.headers.get("content-length");
+					it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+					update();
+				})
+				.catch(() => {
+					it.size = "Error";
+					update();
+				});
+		});
 
 		setTimeout(() => {
 			updateBadgePositions();
