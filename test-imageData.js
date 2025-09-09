@@ -513,16 +513,17 @@ function fetchOriginalDimensions(url, callback) {
 
 // --- Fetch actual server dimensions and file size ---
 items.forEach(it => {
-    // Fetch real dimensions
+    // Fetch true server dimensions first
     fetchOriginalDimensions(it.url, dims => {
+        // Update the 'dim' field with actual dimensions
         it.dim = `${dims.width}×${dims.height} actual, ${it.width}×${it.height} rendered`;
 
-        // Fetch file size
+        // Then fetch file size
         fetch(it.url, { method: "HEAD" })
             .then(r => {
                 const cl = r.headers.get("content-length");
                 it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-                update(); // refresh overlay
+                update(); // refresh overlay after both are ready
             })
             .catch(() => {
                 it.size = "Unknown";
@@ -530,6 +531,7 @@ items.forEach(it => {
             });
     });
 });
+
 
 
 		setTimeout(() => {
