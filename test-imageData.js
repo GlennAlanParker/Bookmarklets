@@ -129,12 +129,24 @@
 		
 
 		// Load original image to get real dimensions
-function fetchOriginalDimensions(url, callback) {
-    const img = new Image();
-    img.onload = () => callback({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = () => callback({ width: 0, height: 0 });
-    img.src = url;
+async function fetchOriginalDimensions(url) {
+    try {
+        const resp = await fetch(url);
+        const blob = await resp.blob();
+        return await new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+                resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                URL.revokeObjectURL(img.src);
+            };
+            img.onerror = () => resolve({ width: 0, height: 0 });
+            img.src = URL.createObjectURL(blob);
+        });
+    } catch (e) {
+        return { width: 0, height: 0 };
+    }
 }
+
 		
 
 		for (const img of imgs) {
@@ -512,23 +524,25 @@ function fetchOriginalDimensions(url, callback) {
 		d.body.appendChild(o);
 
 // --- Fetch actual server dimensions and file size ---
-items.forEach(it => {
-    // Fetch true server dimensions first
-    fetchOriginalDimensions(it.url, dims => {
-        // Update the 'dim' field with actual dimensions
-        it.dim = `${dims.width}×${dims.height} actual, ${it.width}×${it.height} rendered`;
+items.forEach(async it => {
+    it.dim = "Fetching...";
+    it.size = "Fetching...";
+    update(); // show placeholder while loading
 
-        // Then fetch file size
-        fetch(it.url, { method: "HEAD" })
-            .then(r => {
-                const cl = r.headers.get("content-length");
-                it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-                update(); // refresh overlay after both are ready
-            })
-            .catch(() => {
-                it.size = "Unknown";
-                update();
-            });
+    const dims = await fetchOriginalDimensions(it.url);
+    it.dim = `${dims.width}×${dims.height} actual, ${it.width}×${it.height} rendered`;
+
+    try {
+        const head = await fetch(it.url, { method: "HEAD" });
+        const cl = head.headers.get("content-length");
+        it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+    } catch {
+        it.size = "Unknown";
+    }
+
+    update(); // refresh overlay with actual dimensions
+});
+
     });
 });
 
