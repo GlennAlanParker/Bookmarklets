@@ -29,137 +29,146 @@
 			}
 		};
 
+		// --- Create a floating numbered badge for each image ---
+		function createBadge(img, num) {
+			const box = d.createElement("div");
+			Object.assign(box.style, {
+				position: "absolute",
+				left: "0px",
+				top: "0px",
+				display: window._imgData.badgesVisible ? "flex" : "none",
+				width: badgeSize + "px",
+				height: badgeSize + "px",
+				alignItems: "center",
+				justifyContent: "center",
+				background: "#FFA500",
+				color: "#000",
+				fontWeight: "700",
+				fontSize: "14px",
+				border: "2px solid #000",
+				borderRadius: "4px",
+				boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+				cursor: "pointer",
+				userSelect: "none",
+				zIndex: 2147483647
+			});
+			box.textContent = num;
+			box.title = "Scroll to image #" + num;
+			box.setAttribute("data-img-badge", "1");
 
-// --- Create a floating numbered badge for each image ---
-function createBadge(img, num) {
-    const box = document.createElement("div");
-    Object.assign(box.style, {
-        position: "absolute",
-        background: "#FFA500",
-        color: "#000",
-        width: badgeSize + "px",
-        height: badgeSize + "px",
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: "bold",
-        fontSize: "14px",
-        border: "2px solid #000",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-        cursor: "pointer",
-        zIndex: 2147483647
-    });
-    box.textContent = num;
-    document.body.appendChild(box);
+			// click -> scroll image into view
+			box.addEventListener("click", e => {
+				e.preventDefault();
+				e.stopPropagation();
+				try { img.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (err) {}
+			});
 
-    const badge = { img, box };
-    badges.push(badge);
-    return badge;
-}
-
-
-
-
-// --- Gather images (prefer native/original URLs) ---
-function pickLargestFromSrcset(srcset) {
-	try {
-		const parts = srcset.split(',');
-		let best = parts[0].trim();
-		let bestNum = -1;
-		for (const p of parts) {
-			const seg = p.trim().split(/\s+/);
-			const url = seg[0];
-			const desc = seg[1] || '';
-			let num = -1;
-			if (desc.endsWith('w')) num = parseInt(desc.replace('w','')) || -1;
-			else if (desc.endsWith('x')) num = Math.round((parseFloat(desc.replace('x',''))||1) * 1000);
-			if (num > bestNum) { bestNum = num; best = url; }
+			d.body.appendChild(box);
+			const badge = { img, box };
+			badges.push(badge);
+			return badge;
 		}
-		return new URL(best, location.href).href;
-	} catch {
-		return srcset.split(',').slice(-1)[0].trim().split(/\s+/)[0];
-	}
-}
 
-function getNativeUrl(img) {
-	// dataset-based lazy loaders
-	const datasetCandidates = ['src','original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original'];
-	for (const k of datasetCandidates) {
-		const val = img.dataset?.[k] || img.getAttribute?.(k);
-		if (val) {
-			if (val.includes(',')) return pickLargestFromSrcset(val);
-			return val;
+		// --- Gather images (prefer native/original URLs) ---
+		function pickLargestFromSrcset(srcset) {
+			try {
+				const parts = srcset.split(',');
+				let best = parts[0].trim();
+				let bestNum = -1;
+				for (const p of parts) {
+					const seg = p.trim().split(/\s+/);
+					const url = seg[0];
+					const desc = seg[1] || '';
+					let num = -1;
+					if (desc.endsWith('w')) num = parseInt(desc.replace('w','')) || -1;
+					else if (desc.endsWith('x')) num = Math.round((parseFloat(desc.replace('x',''))||1) * 1000);
+					if (num > bestNum) { bestNum = num; best = url; }
+				}
+				return new URL(best, location.href).href;
+			} catch {
+				return srcset.split(',').slice(-1)[0].trim().split(/\s+/)[0];
+			}
 		}
-	}
-	// srcset
-	if (img.srcset) return pickLargestFromSrcset(img.srcset);
-	// currentSrc
-	if (img.currentSrc) return img.currentSrc;
-	// CDN wrappers (Next.js etc.)
-	try {
-		const u = new URL(img.src, location.href);
-		if (u.pathname.includes('/_next/image')) {
-			const q = u.searchParams.get('url');
-			if (q) return decodeURIComponent(q);
+
+		function getNativeUrl(img) {
+			// dataset-based lazy loaders
+			const datasetCandidates = ['src','original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original'];
+			for (const k of datasetCandidates) {
+				const val = img.dataset?.[k] || img.getAttribute?.(k);
+				if (val) {
+					if (val.includes(',')) return pickLargestFromSrcset(val);
+					return val;
+				}
+			}
+			// srcset
+			if (img.srcset) return pickLargestFromSrcset(img.srcset);
+			// currentSrc
+			if (img.currentSrc) return img.currentSrc;
+			// CDN wrappers (Next.js etc.)
+			try {
+				const u = new URL(img.src, location.href);
+				if (u.pathname.includes('/_next/image')) {
+					const q = u.searchParams.get('url');
+					if (q) return decodeURIComponent(q);
+				}
+				for (const paramName of ['url','src','u','image']) {
+					const p = u.searchParams.get(paramName);
+					if (p && (p.startsWith('http') || p.startsWith('//'))) return decodeURIComponent(p);
+				}
+			} catch {}
+			// strip query
+			const noQuery = (img.src || '').split('?')[0].split('#')[0];
+			return noQuery || img.src;
 		}
-		for (const paramName of ['url','src','u','image']) {
-			const p = u.searchParams.get(paramName);
-			if (p && (p.startsWith('http') || p.startsWith('//'))) return decodeURIComponent(p);
+
+		const imgs = [...d.images].filter(e => {
+			const s = (e.src || "").toLowerCase();
+			const alt = (e.alt || "").toLowerCase();
+			return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
+		});
+
+		for (const img of imgs) {
+			const native = getNativeUrl(img) || img.src;
+			let name;
+			try {
+				const nm = new URL(native, location.href).pathname.split('/').pop();
+				name = nm || (img.src.split("/").pop().split("?")[0]);
+			} catch {
+				name = (img.src || "").split("/").pop().split("?")[0];
+			}
+			if (!name) continue;
+
+			img.id = `imgData_${n}`;
+			const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
+
+			items.push({
+				name,
+				dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
+				size: "Fetching...",
+				alt: img.alt || "None",
+				caption,
+				url: native,        // <-- use native/original URL
+				anchorId: img.id
+			});
+			createBadge(img, n);
+			n++;
 		}
-	} catch {}
-	// strip query
-	const noQuery = (img.src || '').split('?')[0].split('#')[0];
-	return noQuery || img.src;
-}
-
-const imgs = [...d.images].filter(e => {
-	const s = (e.src || "").toLowerCase();
-	const alt = (e.alt || "").toLowerCase();
-	return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
-});
-
-for (const img of imgs) {
-	const native = getNativeUrl(img) || img.src;
-	let name;
-	try {
-		const nm = new URL(native, location.href).pathname.split('/').pop();
-		name = nm || (img.src.split("/").pop().split("?")[0]);
-	} catch {
-		name = img.src.split("/").pop().split("?")[0];
-	}
-	if (!name) continue;
-
-	img.id = `imgData_${n}`;
-	const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
-
-	items.push({
-		name,
-		dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
-		size: "Fetching...",
-		alt: img.alt || "None",
-		caption,
-		url: native,        // <-- use native/original URL
-		anchorId: img.id
-	});
-	createBadge(img, n);
-	n++;
-}
-
-
-
-
-
-
-
 
 		const updateBadgePositions = () => {
 			const placed = [];
 			for (const b of badges) {
 				try {
 					const r = b.img.getBoundingClientRect();
-					let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + scrollX - 8)));
-					let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + scrollY - 8)));
+					// if image not in layout or has zero rect, hide badge
+					if (!r || (r.width === 0 && r.height === 0)) {
+						b.box.style.display = "none";
+						continue;
+					}
+					// Use window.scrollX/Y explicitly
+					const sx = window.scrollX || 0;
+					const sy = window.scrollY || 0;
+					let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + sx - 8)));
+					let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + sy - 8)));
 					for (const p of placed) {
 						if (Math.abs(p.x - x) < badgeSize + 8 && !((y + badgeSize + vGap < p.y) || y > p.y + p.bh + vGap)) {
 							y = p.y + p.bh + vGap;
@@ -177,7 +186,9 @@ for (const img of imgs) {
 						bw: badgeSize,
 						bh: badgeSize
 					});
-				} catch {}
+				} catch (err) {
+					// ignore per-badge errors
+				}
 			}
 		};
 
@@ -209,7 +220,8 @@ for (const img of imgs) {
 			border: "1px solid #ccc",
 			borderRadius: "10px",
 			boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-			overflow: "hidden"
+			overflow: "hidden",
+			left: "auto"
 		});
 
 		const headerH = 56,
@@ -223,7 +235,7 @@ for (const img of imgs) {
 				display: "flex",
 				alignItems: "center",
 				justifyContent: pos === "top" ? "space-between" : "flex-end",
-				padding: pos === "top" ? "6px 10px" : "2px 8px", // smaller padding for footer
+				padding: pos === "top" ? "6px 10px" : "2px 8px",
 				background: "#34495e",
 				color: "#fff",
 				fontWeight: 700,
@@ -231,9 +243,7 @@ for (const img of imgs) {
 				userSelect: "none"
 			});
 
-
 			if (pos === "top") {
-				// Title
 				const title = d.createElement("h1");
 				title.textContent = "Image Data";
 				Object.assign(title.style, {
@@ -244,19 +254,17 @@ for (const img of imgs) {
 				});
 				b.appendChild(title);
 
-				// Buttons container
 				const btns = d.createElement("div");
 				btns.style.display = "flex";
 				btns.style.alignItems = "center";
 				btns.style.gap = "8px";
 
-				// Toggle badges
 				const toggleGroup = d.createElement("div");
 				const toggleHeight = badgeSize + 6;
 				Object.assign(toggleGroup.style, {
 					display: "flex",
 					alignItems: "center",
-					background: "#5D6D7E", // muted slate blue
+					background: "#5D6D7E",
 					color: "#fff",
 					borderRadius: "6px",
 					padding: "2px 6px",
@@ -287,16 +295,14 @@ for (const img of imgs) {
 				});
 				toggleGroup.appendChild(toggleBtn);
 
-				// Toggle action
 				toggleGroup.onclick = e => {
 					e.stopPropagation();
 					window._imgData.badgesVisible = !window._imgData.badgesVisible;
 					badges.forEach(bb => bb.box.style.display = window._imgData.badgesVisible ? "flex" : "none");
 				};
 
-				// Hover effects
 				toggleGroup.addEventListener("mouseenter", () => {
-					toggleGroup.style.background = "#4A5A6A"; // slightly darker
+					toggleGroup.style.background = "#4A5A6A";
 					toggleGroup.style.transform = "scale(1.05)";
 				});
 				toggleGroup.addEventListener("mouseleave", () => {
@@ -306,16 +312,15 @@ for (const img of imgs) {
 
 				btns.appendChild(toggleGroup);
 
-				// Close button
 				const x = d.createElement("div");
 				x.textContent = "×";
 				Object.assign(x.style, {
 					cursor: "pointer",
-					fontSize: "14px", // smaller × character
+					fontSize: "14px",
 					padding: "0",
 					margin: "0 0 0 12px",
 					borderRadius: "50%",
-					width: "20px", // fixed size
+					width: "20px",
 					height: "20px",
 					background: "#e74c3c",
 					color: "#fff",
@@ -351,7 +356,6 @@ for (const img of imgs) {
 			color: "#333333"
 		});
 
-		// Scroll to top button - positioned fixed relative to overlay
 		const scrollTopBtn = d.createElement("div");
 		scrollTopBtn.textContent = "↑";
 		Object.assign(scrollTopBtn.style, {
@@ -360,10 +364,8 @@ for (const img of imgs) {
 			right: "10px",
 			width: "30px",
 			height: "30px",
-			marginRight: "10px",
-			marginBottom: "10px",
-			background: "#FFA500", // match badge accent orange
-			color: "#000", // dark text for contrast
+			background: "#FFA500",
+			color: "#000",
 			display: "none",
 			alignItems: "center",
 			justifyContent: "center",
@@ -378,27 +380,20 @@ for (const img of imgs) {
 			pointerEvents: "auto"
 		});
 
-		// Hover effect
 		scrollTopBtn.addEventListener("mouseenter", () => {
-			scrollTopBtn.style.background = "#e67e22"; // darker orange hover
+			scrollTopBtn.style.background = "#e67e22";
 			scrollTopBtn.style.transform = "scale(1.1)";
 		});
 		scrollTopBtn.addEventListener("mouseleave", () => {
 			scrollTopBtn.style.background = "#FFA500";
 			scrollTopBtn.style.transform = "scale(1)";
 		});
-		// Click to scroll to top
 		scrollTopBtn.addEventListener("click", () => {
-			txt.scrollTo({
-				top: 0,
-				behavior: "smooth"
-			});
+			txt.scrollTo({ top: 0, behavior: "smooth" });
 		});
 
-		// Append to overlay (not txt) so it's positioned relative to overlay
 		o.appendChild(scrollTopBtn);
 
-		// Show/hide based on scroll position
 		txt.addEventListener("scroll", () => {
 			if (txt.scrollTop > 20) {
 				scrollTopBtn.style.display = "flex";
@@ -406,18 +401,11 @@ for (const img of imgs) {
 				scrollTopBtn.style.display = "none";
 			}
 		});
-
-		// Show/hide scroll to top button based on scroll position
 		const checkScroll = () => {
-			if (txt.scrollTop > 20) {
-				scrollTopBtn.style.display = "flex";
-			} else {
-				scrollTopBtn.style.display = "none";
-			}
+			if (txt.scrollTop > 20) scrollTopBtn.style.display = "flex";
+			else scrollTopBtn.style.display = "none";
 		};
-
 		txt.addEventListener("scroll", checkScroll);
-		// Also check on content updates
 		setTimeout(checkScroll, 100);
 
 		const autosize = () => {
@@ -426,7 +414,6 @@ for (const img of imgs) {
 		};
 
 		const update = () => {
-			// Clear only entries and separators
 			[...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
 
 			if (!items.length) {
@@ -467,7 +454,7 @@ for (const img of imgs) {
 					lineHeight: badgeSize + "px",
 					textAlign: "center",
 					userSelect: "none",
-					textDecoration: "underline", // 👈 add underline
+					textDecoration: "underline",
 					borderRadius: "4px",
 					boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
 					cursor: "pointer"
@@ -475,10 +462,7 @@ for (const img of imgs) {
 				link.addEventListener("click", e => {
 					e.preventDefault();
 					const el = d.getElementById(it.anchorId);
-					if (el) el.scrollIntoView({
-						behavior: "smooth",
-						block: "center"
-					});
+					if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
 				});
 
 				badgeDiv.appendChild(link);
@@ -498,7 +482,6 @@ for (const img of imgs) {
 
 				txt.appendChild(entry);
 
-				// Add separator only if not the last item
 				if (i < items.length - 1) {
 					const hr = d.createElement("hr");
 					hr.className = "img-separator";
@@ -518,26 +501,19 @@ for (const img of imgs) {
 		o.append(mkbar("top"), txt, mkbar("bottom"));
 		d.body.appendChild(o);
 
-
-
-
-items.forEach(it => {
-	fetch(it.url, { method: "HEAD" })
-		.then(r => {
-			const cl = r.headers.get("content-length");
-			it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-			update();
-		})
-		.catch(() => {
-			// fallback: some servers block HEAD
-			it.size = "Unknown";
-			update();
+		items.forEach(it => {
+			// HEAD may be blocked cross-origin; fall back gracefully
+			fetch(it.url, { method: "HEAD" })
+				.then(r => {
+					const cl = r.headers.get("content-length");
+					it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+					update();
+				})
+				.catch(() => {
+					it.size = "Unknown";
+					update();
+				});
 		});
-});
-
-		
-		
-		
 
 		setTimeout(() => {
 			updateBadgePositions();
@@ -549,10 +525,7 @@ items.forEach(it => {
 		const startDrag = (e) => {
 			if (e.target.closest("[data-drag-ignore]")) return;
 			const r = o.getBoundingClientRect();
-			drag = {
-				dx: e.clientX - r.left,
-				dy: e.clientY - r.top
-			};
+			drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
 			e.preventDefault();
 		};
 		const onDrag = (e) => {
@@ -561,15 +534,13 @@ items.forEach(it => {
 			o.style.top = (e.clientY - drag.dy) + "px";
 			o.style.right = "auto";
 		};
-		const endDrag = () => {
-			drag = null;
-		};
+		const endDrag = () => { drag = null; };
 		d.addEventListener("pointermove", onDrag);
 		d.addEventListener("pointerup", endDrag);
 		d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
 
-		// Resizers (allows full viewport edges)
-		["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(dir => {
+		// Resizers
+		["n","s","e","w","ne","nw","se","sw"].forEach(dir => {
 			const h = d.createElement("div");
 			Object.assign(h.style, {
 				position: "absolute",
@@ -586,11 +557,11 @@ items.forEach(it => {
 			if (dir.includes("s")) h.style.bottom = "0";
 			if (dir.includes("e")) h.style.right = "0";
 			if (dir.includes("w")) h.style.left = "0";
-			if (["n", "s"].includes(dir)) {
+			if (["n","s"].includes(dir)) {
 				h.style.left = "50%";
 				h.style.marginLeft = "-4px";
 			}
-			if (["e", "w"].includes(dir)) {
+			if (["e","w"].includes(dir)) {
 				h.style.top = "50%";
 				h.style.marginTop = "-4px";
 			}
@@ -607,58 +578,38 @@ items.forEach(it => {
 			h.addEventListener("pointerdown", e => {
 				e.preventDefault();
 				e.stopPropagation();
-				let startX = e.clientX,
-					startY = e.clientY;
+				let startX = e.clientX, startY = e.clientY;
 				const r = o.getBoundingClientRect();
-				let startW = r.width,
-					startH = r.height,
-					startL = r.left,
-					startT = r.top;
-
-				const minW = 200,
-					minH = 140;
+				let startW = r.width, startH = r.height, startL = r.left, startT = r.top;
+				const minW = 200, minH = 140;
 
 				const onMove = me => {
-					let dx = me.clientX - startX;
-					let dy = me.clientY - startY;
+					let dx = me.clientX - startX, dy = me.clientY - startY;
+					let newTop = startT, newLeft = startL, newWidth = startW, newHeight = startH;
 
-					let newTop = startT;
-					let newLeft = startL;
-					let newWidth = startW;
-					let newHeight = startH;
-
-					// East
 					if (dir.includes("e")) {
 						newWidth = Math.min(window.innerWidth - startL, Math.max(minW, startW + dx));
 					}
-
-					// West
 					if (dir.includes("w")) {
 						newLeft = Math.max(0, startL + dx);
 						newWidth = Math.max(minW, (startL + startW) - newLeft);
 					}
-
-					// South
 					if (dir.includes("s")) {
 						let bottom = Math.min(window.innerHeight, me.clientY);
 						newHeight = Math.max(minH, bottom - startT);
 					}
-
-					// North
 					if (dir.includes("n")) {
 						let bottom = startT + startH;
 						newTop = Math.max(0, me.clientY);
 						newHeight = Math.max(minH, bottom - newTop);
 					}
 
-					// Apply
 					o.style.width = newWidth + "px";
 					o.style.height = newHeight + "px";
 					o.style.left = newLeft + "px";
 					o.style.top = newTop + "px";
 					o.style.right = "auto";
 				};
-
 
 				const onUp = () => {
 					d.removeEventListener("pointermove", onMove);
