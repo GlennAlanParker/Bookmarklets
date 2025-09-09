@@ -126,6 +126,16 @@
 			const alt = (e.alt || "").toLowerCase();
 			return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
 		});
+		
+
+		// Load original image to get real dimensions
+function fetchOriginalDimensions(url, callback) {
+    const img = new Image();
+    img.onload = () => callback({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => callback({ width: 0, height: 0 });
+    img.src = url;
+}
+		
 
 		for (const img of imgs) {
 			const native = getNativeUrl(img) || img.src;
@@ -501,19 +511,26 @@
 		o.append(mkbar("top"), txt, mkbar("bottom"));
 		d.body.appendChild(o);
 
-		items.forEach(it => {
-			// HEAD may be blocked cross-origin; fall back gracefully
-			fetch(it.url, { method: "HEAD" })
-				.then(r => {
-					const cl = r.headers.get("content-length");
-					it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-					update();
-				})
-				.catch(() => {
-					it.size = "Unknown";
-					update();
-				});
-		});
+// --- Fetch actual server dimensions and file size ---
+items.forEach(it => {
+    // Fetch real dimensions
+    fetchOriginalDimensions(it.url, dims => {
+        it.dim = `${dims.width}×${dims.height} actual, ${it.width}×${it.height} rendered`;
+
+        // Fetch file size
+        fetch(it.url, { method: "HEAD" })
+            .then(r => {
+                const cl = r.headers.get("content-length");
+                it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+                update(); // refresh overlay
+            })
+            .catch(() => {
+                it.size = "Unknown";
+                update();
+            });
+    });
+});
+
 
 		setTimeout(() => {
 			updateBadgePositions();
