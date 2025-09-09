@@ -128,10 +128,10 @@
 		});
 		
 
-		// Load original image to get real dimensions
-async function fetchOriginalDimensions(url) {
+async function getServerImageDimensions(url) {
     try {
         const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Failed to fetch');
         const blob = await resp.blob();
         return await new Promise(resolve => {
             const img = new Image();
@@ -143,9 +143,11 @@ async function fetchOriginalDimensions(url) {
             img.src = URL.createObjectURL(blob);
         });
     } catch (e) {
+        console.error("Error fetching image dimensions:", e);
         return { width: 0, height: 0 };
     }
 }
+
 
 		
 
@@ -527,11 +529,13 @@ async function fetchOriginalDimensions(url) {
 items.forEach(async it => {
     it.dim = "Fetching...";
     it.size = "Fetching...";
-    update(); // show placeholder while loading
+    update(); // show placeholder
 
-    const dims = await fetchOriginalDimensions(it.url);
+    // Get true server dimensions
+    const dims = await getServerImageDimensions(it.url);
     it.dim = `${dims.width}×${dims.height} actual, ${it.width}×${it.height} rendered`;
 
+    // Get file size
     try {
         const head = await fetch(it.url, { method: "HEAD" });
         const cl = head.headers.get("content-length");
@@ -540,8 +544,9 @@ items.forEach(async it => {
         it.size = "Unknown";
     }
 
-    update(); // refresh overlay with actual dimensions
+    update(); // refresh overlay
 });
+
 
     });
 });
