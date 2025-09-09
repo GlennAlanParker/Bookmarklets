@@ -30,6 +30,33 @@
 		};
 
 
+// --- Create a floating numbered badge for each image ---
+function createBadge(img, num) {
+    const box = document.createElement("div");
+    Object.assign(box.style, {
+        position: "absolute",
+        background: "#FFA500",
+        color: "#000",
+        width: badgeSize + "px",
+        height: badgeSize + "px",
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: "bold",
+        fontSize: "14px",
+        border: "2px solid #000",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+        cursor: "pointer",
+        zIndex: 2147483647
+    });
+    box.textContent = num;
+    document.body.appendChild(box);
+
+    const badge = { img, box };
+    badges.push(badge);
+    return badge;
+}
 
 
 
