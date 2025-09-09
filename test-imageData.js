@@ -29,61 +29,102 @@
 			}
 		};
 
-		// Gather images
-		const imgs = [...d.images].filter(e => {
-			const s = (e.src || "").toLowerCase();
-			const alt = (e.alt || "").toLowerCase();
-			return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
-		});
 
-		const createBadge = (img, index) => {
-			const badge = d.createElement("div"); // was <a>
-			badge.textContent = index;
-			Object.assign(badge.style, {
-				position: "absolute",
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "center",
-				background: "#FFA500",
-				color: "#000",
-				fontWeight: "700",
-				fontSize: "14px",
-				border: "2px solid #000",
-				width: badgeSize + "px",
-				height: badgeSize + "px",
-				lineHeight: badgeSize + "px",
-				textAlign: "center",
-				userSelect: "none",
-				cursor: "default", // not a link anymore
-				borderRadius: "4px",
-				boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-				zIndex: 2147483648,
-			});
-			d.body.appendChild(badge);
-			badges.push({
-				img,
-				box: badge
-			});
-		};
 
-		// Collect item data
-		for (const img of imgs) {
-			const name = (img.src.split("/").pop().split("?")[0]) || "";
-			if (!name) continue;
-			img.id = `imgData_${n}`;
-			const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
-			items.push({
-				name,
-				dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
-				size: "Fetching...",
-				alt: img.alt || "None",
-				caption,
-				url: img.src,
-				anchorId: img.id
-			});
-			createBadge(img, n);
-			n++;
+
+
+
+// --- Gather images (prefer native/original URLs) ---
+function pickLargestFromSrcset(srcset) {
+	try {
+		const parts = srcset.split(',');
+		let best = parts[0].trim();
+		let bestNum = -1;
+		for (const p of parts) {
+			const seg = p.trim().split(/\s+/);
+			const url = seg[0];
+			const desc = seg[1] || '';
+			let num = -1;
+			if (desc.endsWith('w')) num = parseInt(desc.replace('w','')) || -1;
+			else if (desc.endsWith('x')) num = Math.round((parseFloat(desc.replace('x',''))||1) * 1000);
+			if (num > bestNum) { bestNum = num; best = url; }
 		}
+		return new URL(best, location.href).href;
+	} catch {
+		return srcset.split(',').slice(-1)[0].trim().split(/\s+/)[0];
+	}
+}
+
+function getNativeUrl(img) {
+	// dataset-based lazy loaders
+	const datasetCandidates = ['src','original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original'];
+	for (const k of datasetCandidates) {
+		const val = img.dataset?.[k] || img.getAttribute?.(k);
+		if (val) {
+			if (val.includes(',')) return pickLargestFromSrcset(val);
+			return val;
+		}
+	}
+	// srcset
+	if (img.srcset) return pickLargestFromSrcset(img.srcset);
+	// currentSrc
+	if (img.currentSrc) return img.currentSrc;
+	// CDN wrappers (Next.js etc.)
+	try {
+		const u = new URL(img.src, location.href);
+		if (u.pathname.includes('/_next/image')) {
+			const q = u.searchParams.get('url');
+			if (q) return decodeURIComponent(q);
+		}
+		for (const paramName of ['url','src','u','image']) {
+			const p = u.searchParams.get(paramName);
+			if (p && (p.startsWith('http') || p.startsWith('//'))) return decodeURIComponent(p);
+		}
+	} catch {}
+	// strip query
+	const noQuery = (img.src || '').split('?')[0].split('#')[0];
+	return noQuery || img.src;
+}
+
+const imgs = [...d.images].filter(e => {
+	const s = (e.src || "").toLowerCase();
+	const alt = (e.alt || "").toLowerCase();
+	return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
+});
+
+for (const img of imgs) {
+	const native = getNativeUrl(img) || img.src;
+	let name;
+	try {
+		const nm = new URL(native, location.href).pathname.split('/').pop();
+		name = nm || (img.src.split("/").pop().split("?")[0]);
+	} catch {
+		name = img.src.split("/").pop().split("?")[0];
+	}
+	if (!name) continue;
+
+	img.id = `imgData_${n}`;
+	const caption = (img.closest("figure")?.querySelector(".caption")?.innerText || "").trim();
+
+	items.push({
+		name,
+		dim: `${img.naturalWidth}×${img.naturalHeight} actual, ${img.width}×${img.height} rendered`,
+		size: "Fetching...",
+		alt: img.alt || "None",
+		caption,
+		url: native,        // <-- use native/original URL
+		anchorId: img.id
+	});
+	createBadge(img, n);
+	n++;
+}
+
+
+
+
+
+
+
 
 		const updateBadgePositions = () => {
 			const placed = [];
@@ -450,20 +491,26 @@
 		o.append(mkbar("top"), txt, mkbar("bottom"));
 		d.body.appendChild(o);
 
-		items.forEach(it => {
-			fetch(it.url, {
-					method: "HEAD"
-				})
-				.then(r => {
-					const cl = r.headers.get("content-length");
-					it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
-					update();
-				})
-				.catch(() => {
-					it.size = "Error";
-					update();
-				});
+
+
+
+items.forEach(it => {
+	fetch(it.url, { method: "HEAD" })
+		.then(r => {
+			const cl = r.headers.get("content-length");
+			it.size = cl ? (+cl / 1024).toFixed(1) + " KB" : "Unknown";
+			update();
+		})
+		.catch(() => {
+			// fallback: some servers block HEAD
+			it.size = "Unknown";
+			update();
 		});
+});
+
+		
+		
+		
 
 		setTimeout(() => {
 			updateBadgePositions();
