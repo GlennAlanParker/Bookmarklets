@@ -29,6 +29,7 @@
 			}
 		};
 
+		// --- Create badge ---
 		function createBadge(img, num) {
 			const box = d.createElement("div");
 			Object.assign(box.style, {
@@ -58,15 +59,14 @@
 			box.addEventListener("click", e => {
 				e.preventDefault();
 				e.stopPropagation();
-				try { img.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (err) {}
+				try { img.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {}
 			});
 
 			d.body.appendChild(box);
-			const badge = { img, box };
-			badges.push(badge);
-			return badge;
+			badges.push({ img, box });
 		}
 
+		// --- Get native/original image URL ---
 		function pickLargestFromSrcset(srcset) {
 			try {
 				const parts = srcset.split(',');
@@ -91,10 +91,7 @@
 			const datasetCandidates = ['src','original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original'];
 			for (const k of datasetCandidates) {
 				const val = img.dataset?.[k] || img.getAttribute?.(k);
-				if (val) {
-					if (val.includes(',')) return pickLargestFromSrcset(val);
-					return val;
-				}
+				if (val) return val.includes(',') ? pickLargestFromSrcset(val) : val;
 			}
 			if (img.srcset) return pickLargestFromSrcset(img.srcset);
 			if (img.currentSrc) return img.currentSrc;
@@ -109,16 +106,10 @@
 					if (p && (p.startsWith('http') || p.startsWith('//'))) return decodeURIComponent(p);
 				}
 			} catch {}
-			const noQuery = (img.src || '').split('?')[0].split('#')[0];
-			return noQuery || img.src;
+			return (img.src || '').split('?')[0].split('#')[0] || img.src;
 		}
 
-		const imgs = [...d.images].filter(e => {
-			const s = (e.src || "").toLowerCase();
-			const alt = (e.alt || "").toLowerCase();
-			return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
-		});
-
+		// --- Server image dimensions ---
 		async function getServerImageDimensions(url) {
 			try {
 				const resp = await fetch(url);
@@ -126,28 +117,24 @@
 				const blob = await resp.blob();
 				return await new Promise(resolve => {
 					const img = new Image();
-					img.onload = () => {
-						resolve({ width: img.naturalWidth, height: img.naturalHeight });
-						URL.revokeObjectURL(img.src);
-					};
+					img.onload = () => { resolve({ width: img.naturalWidth, height: img.naturalHeight }); URL.revokeObjectURL(img.src); };
 					img.onerror = () => resolve({ width: 0, height: 0 });
 					img.src = URL.createObjectURL(blob);
 				});
-			} catch (e) {
-				console.error("Error fetching image dimensions:", e);
-				return { width: 0, height: 0 };
-			}
+			} catch { return { width: 0, height: 0 }; }
 		}
+
+		// --- Collect images ---
+		const imgs = [...d.images].filter(e => {
+			const s = (e.src || "").toLowerCase();
+			const alt = (e.alt || "").toLowerCase();
+			return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
+		});
 
 		for (const img of imgs) {
 			const native = getNativeUrl(img) || img.src;
 			let name;
-			try {
-				const nm = new URL(native, location.href).pathname.split('/').pop();
-				name = nm || (img.src.split("/").pop().split("?")[0]);
-			} catch {
-				name = (img.src || "").split("/").pop().split("?")[0];
-			}
+			try { name = new URL(native, location.href).pathname.split('/').pop() || img.src.split("/").pop().split("?")[0]; } catch { name = img.src.split("/").pop().split("?")[0]; }
 			if (!name) continue;
 
 			img.id = `imgData_${n}`;
@@ -173,143 +160,191 @@
 			for (const b of badges) {
 				try {
 					const r = b.img.getBoundingClientRect();
-					if (!r || (r.width === 0 && r.height === 0)) {
-						b.box.style.display = "none";
-						continue;
-					}
-					const sx = window.scrollX || 0;
-					const sy = window.scrollY || 0;
+					if (!r || (r.width === 0 && r.height === 0)) { b.box.style.display="none"; continue; }
+					const sx = window.scrollX || 0, sy = window.scrollY || 0;
 					let x = Math.max(margin, Math.min(d.documentElement.scrollWidth - badgeSize - margin, Math.round(r.left + sx - 8)));
 					let y = Math.max(margin, Math.min(d.documentElement.scrollHeight - badgeSize - margin, Math.round(r.top + sy - 8)));
 					for (const p of placed) {
-						if (Math.abs(p.x - x) < badgeSize + 8 && !((y + badgeSize + vGap < p.y) || y > p.y + p.bh + vGap)) {
-							y = p.y + p.bh + vGap;
-							y = Math.min(y, d.documentElement.scrollHeight - badgeSize - margin);
-						}
+						if (Math.abs(p.x-x)<badgeSize+8 && !((y+badgeSize+vGap<p.y) || y>p.y+p.bh+vGap)) y=p.y+p.bh+vGap;
+						y = Math.min(y,d.documentElement.scrollHeight-badgeSize-margin);
 					}
-					Object.assign(b.box.style, {
-						left: x + "px",
-						top: y + "px",
-						display: window._imgData.badgesVisible ? "flex" : "none"
-					});
-					placed.push({ x, y, bw: badgeSize, bh: badgeSize });
+					Object.assign(b.box.style,{left:x+"px",top:y+"px",display:window._imgData.badgesVisible?"flex":"none"});
+					placed.push({x,y,bw:badgeSize,bh:badgeSize});
 				} catch {}
 			}
 		};
 
 		updateBadgePositions();
-		setTimeout(updateBadgePositions, 80);
+		setTimeout(updateBadgePositions,80);
 
 		window._imgData.scrollHandler = updateBadgePositions;
 		window._imgData.resizeHandler = updateBadgePositions;
 		addEventListener("scroll", window._imgData.scrollHandler);
 		addEventListener("resize", window._imgData.resizeHandler);
-		window._imgData.interval = setInterval(updateBadgePositions, 300);
+		window._imgData.interval = setInterval(updateBadgePositions,300);
 
+		// --- Overlay ---
 		const o = d.createElement("div");
-		o.id = "img-data-overlay";
-		window._imgData.overlay = o;
-		Object.assign(o.style, {
-			position: "fixed",
-			top: "10px",
-			right: "0",
-			width: "520px",
-			height: "240px",
-			maxHeight: "95vh",
-			display: "flex",
-			flexDirection: "column",
-			background: "#f8f9fa",
-			font: "12px Arial, sans-serif",
-			zIndex: 2147483647,
-			border: "1px solid #ccc",
-			borderRadius: "10px",
-			boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-			overflow: "hidden",
-			left: "auto"
+		o.id="img-data-overlay";
+		window._imgData.overlay=o;
+		Object.assign(o.style,{
+			position:"fixed",top:"10px",right:"0",width:"520px",height:"240px",
+			maxHeight:"95vh",display:"flex",flexDirection:"column",
+			background:"#f8f9fa",font:"12px Arial, sans-serif",zIndex:2147483647,
+			border:"1px solid #ccc",borderRadius:"10px",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
+			overflow:"hidden",left:"auto"
 		});
 
-		const headerH = 56, footerH = 14;
+		const headerH=56, footerH=14;
 
-		const mkbar = pos => {
-			const bar = d.createElement("div");
-			bar.style.height = pos==="top"?headerH+"px":footerH+"px";
-			bar.style.flex = "0 0 auto";
-			bar.style.background = "#e9ecef";
-			bar.style.display = "flex";
-			bar.style.alignItems = "center";
-			bar.style.justifyContent = "space-between";
-			bar.style.padding = "0 8px";
-			bar.style.fontWeight = "bold";
-			bar.textContent = pos==="top"?"Image Data Overlay":"";
-			return bar;
-		};
+		// --- Top bar with title, toggle, close ---
+		const mkbar=pos=>{
+			const b=d.createElement("div");
+			Object.assign(b.style,{
+				height: pos==="top"?headerH+"px":footerH+"px",
+				display:"flex",
+				alignItems:"center",
+				justifyContent: pos==="top"?"space-between":"flex-end",
+				padding: pos==="top"?"6px 10px":"2px 8px",
+				background:"#34495e",
+				color:"#fff",
+				fontWeight:700,
+				cursor:"grab",
+				userSelect:"none"
+			});
+			if(pos==="top"){
+				const title=d.createElement("h1");
+				title.textContent="Image Data";
+				Object.assign(title.style,{margin:0,color:"#fff",fontSize:"16px",textAlign:"left"});
+				b.appendChild(title);
 
-		const txt = d.createElement("div");
-		txt.style.flex = "1";
-		txt.style.overflow = "auto";
-		txt.style.padding = "4px 8px";
-		txt.style.fontSize = "12px";
-		txt.style.lineHeight = "1.4";
+				const btns=d.createElement("div");
+				btns.style.display="flex"; btns.style.alignItems="center"; btns.style.gap="8px";
 
-		const autosize = () => {
-			if (!o) return;
-			let total = 0;
-			[...txt.children].forEach(el => { total += el.offsetHeight; });
-			o.style.height = Math.min(window.innerHeight*0.9, headerH+footerH+total+24)+"px";
-		};
+				const toggleGroup=d.createElement("div");
+				const toggleHeight=badgeSize+6;
+				Object.assign(toggleGroup.style,{
+					display:"flex",alignItems:"center",
+					background:"#5D6D7E",color:"#fff",borderRadius:"6px",
+					padding:"2px 6px",cursor:"pointer",userSelect:"none",
+					height:toggleHeight+"px",boxShadow:"0 2px 6px rgba(0,0,0,0.2)",
+					transition:"background 0.2s ease, transform 0.2s ease"
+				});
 
-		const update = () => {
-			[...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
-			if (!items.length) {
-				const noImagesText = d.createElement("div");
-				noImagesText.textContent = "No images found.";
-				txt.appendChild(noImagesText);
-				return;
+				const label=d.createElement("span"); label.textContent="Toggle Badges";
+				Object.assign(label.style,{fontSize:"12px",marginRight:"6px"});
+				toggleGroup.appendChild(label);
+
+				const toggleBtn=d.createElement("button");
+				toggleBtn.textContent="🔢"; toggleBtn.title="Toggle Number Badges";
+				Object.assign(toggleBtn.style,{border:"none",background:"transparent",fontSize:"14px",cursor:"pointer",color:"#fff"});
+				toggleGroup.appendChild(toggleBtn);
+
+				toggleGroup.onclick=e=>{
+					e.stopPropagation();
+					window._imgData.badgesVisible=!window._imgData.badgesVisible;
+					badges.forEach(bb=>bb.box.style.display=window._imgData.badgesVisible?"flex":"none");
+				};
+				toggleGroup.addEventListener("mouseenter",()=>{toggleGroup.style.background="#4A5A6A";toggleGroup.style.transform="scale(1.05)";});
+				toggleGroup.addEventListener("mouseleave",()=>{toggleGroup.style.background="#5D6D7E";toggleGroup.style.transform="scale(1)";});
+				btns.appendChild(toggleGroup);
+
+				const x=d.createElement("div"); x.textContent="×";
+				Object.assign(x.style,{
+					cursor:"pointer",fontSize:"14px",padding:0,margin:"0 0 0 12px",
+					borderRadius:"50%",width:"20px",height:"20px",background:"#e74c3c",color:"#fff",
+					display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"
+				});
+				x.title="Close"; x.setAttribute("data-drag-ignore","1");
+				x.onclick=e=>{e.stopPropagation(); o.remove(); window._imgData.cleanup();};
+				btns.appendChild(x);
+				b.appendChild(btns);
 			}
+			b.setAttribute("data-drag-handle","1");
+			return b;
+		};
+
+		const txt=d.createElement("div");
+		Object.assign(txt.style,{padding:"10px",overflow:"auto",flex:"1",background:"#fff",position:"relative",textAlign:"left",color:"#333"});
+
+		const scrollTopBtn=d.createElement("div"); scrollTopBtn.textContent="↑";
+		Object.assign(scrollTopBtn.style,{
+			position:"absolute",bottom:"10px",right:"10px",width:"30px",height:"30px",
+			background:"#FFA500",color:"#000",display:"none",alignItems:"center",justifyContent:"center",
+			borderRadius:"50%",cursor:"pointer",fontSize:"16px",fontWeight:"bold",boxShadow:"0 2px 8px rgba(0,0,0,0.3)",
+			zIndex:"10",transition:"all 0.2s ease",userSelect:"none",pointerEvents:"auto"
+		});
+		scrollTopBtn.addEventListener("mouseenter",()=>{scrollTopBtn.style.background="#e67e22";scrollTopBtn.style.transform="scale(1.1)";});
+		scrollTopBtn.addEventListener("mouseleave",()=>{scrollTopBtn.style.background="#FFA500";scrollTopBtn.style.transform="scale(1)";});
+		scrollTopBtn.addEventListener("click",()=>{txt.scrollTo({top:0,behavior:"smooth"});});
+		txt.appendChild(scrollTopBtn);
+
+		const checkScroll=()=>{scrollTopBtn.style.display=txt.scrollTop>20?"flex":"none";};
+		txt.addEventListener("scroll",checkScroll);
+		setTimeout(checkScroll,100);
+
+		const autosize=()=>{o.style.height=Math.max(140,Math.min(headerH+txt.scrollHeight+footerH,Math.floor(0.9*innerHeight)))+"px";};
+
+		const update=()=>{
+			[...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el=>el.remove());
+			if(!items.length){const noImagesText=d.createElement("div"); noImagesText.textContent="No images found."; txt.appendChild(noImagesText); return;}
 			items.forEach((it,i)=>{
-				const entry = d.createElement("div");
-				entry.className="img-entry";
-				entry.style.marginBottom="4px";
-				entry.innerHTML = `
-<div><strong>#${i+1}</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.name}</a></div>
-<div>Dimensions: ${it.dim}</div>
-<div>Size: ${it.size}</div>
-<div>Alt: ${it.alt}</div>
-${it.caption?`<div>Caption: ${it.caption}</div>`:""}
-				`;
-				txt.appendChild(entry);
+				const entry=d.createElement("div"); entry.className="img-entry"; entry.style.display="flex"; entry.style.alignItems="flex-start"; entry.style.padding="4px 0";
+				const badgeDiv=d.createElement("div"); badgeDiv.style.flex=`0 0 ${badgeSize}px`; badgeDiv.style.display="flex"; badgeDiv.style.alignItems="center"; badgeDiv.style.justifyContent="center"; badgeDiv.style.paddingRight="10px";
+				const link=d.createElement("a"); link.href=`#${it.anchorId}`; link.textContent=i+1;
+				Object.assign(link.style,{display:"flex",alignItems:"center",justifyContent:"center",background:"#FFA500",color:"#000",fontWeight:"700",fontSize:"14px",border:"2px solid #000",width:badgeSize+"px",height:badgeSize+"px",lineHeight:badgeSize+"px",textAlign:"center",userSelect:"none",textDecoration:"underline",borderRadius:"4px",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",cursor:"pointer"});
+				link.addEventListener("click",e=>{e.preventDefault();const el=d.getElementById(it.anchorId); if(el) el.scrollIntoView({behavior:"smooth",block:"center"});});
+				badgeDiv.appendChild(link); entry.appendChild(badgeDiv);
+				const infoDiv=d.createElement("div"); infoDiv.style.flex="1"; infoDiv.style.textAlign="left"; infoDiv.innerHTML=`
+<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:#0066cc;text-decoration:underline">${it.name}</a></div>
+<div><strong>Dimensions:</strong> ${it.dim}</div>
+<div><strong>Size:</strong> ${it.size}</div>
+<div><strong>Alt:</strong> ${it.alt}</div>
+${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
+				entry.appendChild(infoDiv); txt.appendChild(entry);
+				if(i<items.length-1){const hr=d.createElement("hr"); hr.className="img-separator"; Object.assign(hr.style,{margin:"4px 0",border:"none",borderTop:"1px solid #ccc"}); txt.appendChild(hr);}
 			});
 			autosize();
 		};
 
-		o.append(mkbar("top"), txt, mkbar("bottom"));
-		d.body.appendChild(o);
+		o.append(mkbar("top"),txt,mkbar("bottom")); d.body.appendChild(o);
 		update();
 
-		// --- Optimized parallel fetch ---
-		(async () => {
-			await Promise.all(items.map(async it => {
-				it.dim = "Fetching...";
-				it.size = "Fetching...";
-				update();
-
-				const [dims,size] = await Promise.all([
+		// --- Fetch actual dimensions & size ---
+		(async ()=>{
+			await Promise.all(items.map(async it=>{
+				it.dim="Fetching..."; it.size="Fetching..."; update();
+				const [dims,size]=await Promise.all([
 					getServerImageDimensions(it.url),
-					(async ()=>{
-						try{
-							const head = await fetch(it.url,{method:"HEAD"});
-							const cl = head.headers.get("content-length");
-							return cl?(+cl/1024).toFixed(1)+" KB":"Unknown";
-						}catch{ return "Unknown"; }
+					(async()=>{
+						try{const head=await fetch(it.url,{method:"HEAD"}); const cl=head.headers.get("content-length"); return cl?`${(parseInt(cl)/1024).toFixed(1)} KB`:"Unknown";}catch{return "Unknown";}
 					})()
 				]);
-				it.dim = `${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
-				it.size = size;
+				it.dim=`${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
+				it.size=size;
 				update();
 			}));
 		})();
 
-		setTimeout(()=>{ updateBadgePositions(); autosize(); }, 150);
+		// --- Drag ---
+		let drag=false,dx=0,dy=0;
+		o.addEventListener("mousedown",e=>{
+			if(e.target.closest("[data-drag-handle]")){drag=true; dx=e.clientX-o.offsetLeft; dy=e.clientY-o.offsetTop; e.preventDefault();}
+		});
+		document.addEventListener("mousemove",e=>{if(drag){o.style.left=(e.clientX-dx)+"px"; o.style.top=(e.clientY-dy)+"px"; o.style.right="auto"; e.preventDefault();}});
+		document.addEventListener("mouseup",()=>{drag=false;});
 
-	} catch(e){ console.error(e); }
+		// --- Resize ---
+		const resizer=d.createElement("div");
+		Object.assign(resizer.style,{
+			width:"12px",height:"12px",position:"absolute",bottom:"2px",right:"2px",
+			cursor:"nwse-resize",background:"#34495e",borderRadius:"3px",zIndex:"9999"
+		});
+		o.appendChild(resizer);
+		let resizing=false,rx=0,ry=0,rw=0,rh=0;
+		resizer.addEventListener("mousedown",e=>{resizing=true; rx=e.clientX; ry=e.clientY; rw=o.offsetWidth; rh=o.offsetHeight; e.preventDefault(); e.stopPropagation();});
+		document.addEventListener("mousemove",e=>{if(resizing){o.style.width=Math.max(200,rw+(e.clientX-rx))+"px"; o.style.height=Math.max(140,rh+(e.clientY-ry))+"px"; e.preventDefault();}});
+		document.addEventListener("mouseup",()=>{resizing=false;});
+
+	}catch(e){console.error(e);}
 })();
