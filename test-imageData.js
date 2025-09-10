@@ -66,7 +66,7 @@
 			badges.push({ img, box });
 		}
 
-		// --- Get native/original image URL ---
+		// --- Get largest image from srcset ---
 		function pickLargestFromSrcset(srcset) {
 			try {
 				const parts = srcset.split(',');
@@ -87,6 +87,7 @@
 			}
 		}
 
+		// --- Get original/unproxied URL ---
 		function getNativeUrl(img) {
 			const datasetCandidates = ['src','original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original'];
 			for (const k of datasetCandidates) {
@@ -95,12 +96,15 @@
 			}
 			if (img.srcset) return pickLargestFromSrcset(img.srcset);
 			if (img.currentSrc) return img.currentSrc;
+
 			try {
 				const u = new URL(img.src, location.href);
+				// --- Next.js / proxy URLs ---
 				if (u.pathname.includes('/_next/image')) {
 					const q = u.searchParams.get('url');
 					if (q) return decodeURIComponent(q);
 				}
+				// Check common param names
 				for (const paramName of ['url','src','u','image']) {
 					const p = u.searchParams.get(paramName);
 					if (p && (p.startsWith('http') || p.startsWith('//'))) return decodeURIComponent(p);
@@ -109,19 +113,27 @@
 			return (img.src || '').split('?')[0].split('#')[0] || img.src;
 		}
 
-		// --- Server image dimensions ---
+		// --- Get server image dimensions ---
 		async function getServerImageDimensions(url) {
+			return new Promise(resolve => {
+				const img = new Image();
+				img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+				img.onerror = () => resolve({ width: 0, height: 0 });
+				img.crossOrigin = "anonymous"; // allows CORS if server permits
+				img.src = url;
+			});
+		}
+
+		// --- Get file size via HEAD ---
+		async function getFileSize(url) {
 			try {
-				const resp = await fetch(url);
-				if (!resp.ok) throw new Error('Failed to fetch');
-				const blob = await resp.blob();
-				return await new Promise(resolve => {
-					const img = new Image();
-					img.onload = () => { resolve({ width: img.naturalWidth, height: img.naturalHeight }); URL.revokeObjectURL(img.src); };
-					img.onerror = () => resolve({ width: 0, height: 0 });
-					img.src = URL.createObjectURL(blob);
-				});
-			} catch { return { width: 0, height: 0 }; }
+				const resp = await fetch(url, { method: "HEAD" });
+				if (!resp.ok) throw new Error("HEAD failed");
+				const cl = resp.headers.get("content-length");
+				return cl ? `${(parseInt(cl)/1024).toFixed(1)} KB` : "Unknown";
+			} catch {
+				return "Unknown";
+			}
 		}
 
 		// --- Collect images ---
@@ -155,6 +167,7 @@
 			n++;
 		}
 
+		// --- Badge positioning ---
 		const updateBadgePositions = () => {
 			const placed = [];
 			for (const b of badges) {
@@ -183,7 +196,7 @@
 		addEventListener("resize", window._imgData.resizeHandler);
 		window._imgData.interval = setInterval(updateBadgePositions,300);
 
-		// --- Overlay ---
+		// --- Overlay setup ---
 		const o = d.createElement("div");
 		o.id="img-data-overlay";
 		window._imgData.overlay=o;
@@ -308,12 +321,7 @@ ${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
 		(async ()=>{
 			await Promise.all(items.map(async it=>{
 				const dims=await getServerImageDimensions(it.url);
-				let size="Fetching...";
-				try{
-					const head=await fetch(it.url,{method:"HEAD"});
-					const cl=head.headers.get("content-length");
-					size=cl?`${(parseInt(cl)/1024).toFixed(1)} KB`:"Unknown";
-				}catch{size="Unknown";}
+				const size=await getFileSize(it.url);
 				it.dim=`${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
 				it.size=size;
 				update();
