@@ -66,7 +66,7 @@
 			badges.push({ img, box });
 		}
 
-		// --- Get largest image from srcset ---
+		// --- Pick largest from srcset ---
 		function pickLargestFromSrcset(srcset) {
 			try {
 				const parts = srcset.split(',');
@@ -87,9 +87,9 @@
 			}
 		}
 
-		// --- Get original/unproxied URL ---
-		function getNativeUrl(img) {
-			const datasetCandidates = ['src','original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original'];
+		// --- Extract original/unproxied image URL ---
+		function getOriginalUrl(img) {
+			const datasetCandidates = ['original','originalSrc','lazySrc','dataSrc','dataSrcset','data_original','src'];
 			for (const k of datasetCandidates) {
 				const val = img.dataset?.[k] || img.getAttribute?.(k);
 				if (val) return val.includes(',') ? pickLargestFromSrcset(val) : val;
@@ -99,32 +99,37 @@
 
 			try {
 				const u = new URL(img.src, location.href);
-				// --- Next.js / proxy URLs ---
+
+				// --- Next.js _next/image ---
 				if (u.pathname.includes('/_next/image')) {
 					const q = u.searchParams.get('url');
 					if (q) return decodeURIComponent(q);
 				}
-				// Check common param names
+
+				// --- Cloudflare, Imgix, Shopify, other proxies ---
 				for (const paramName of ['url','src','u','image']) {
 					const p = u.searchParams.get(paramName);
 					if (p && (p.startsWith('http') || p.startsWith('//'))) return decodeURIComponent(p);
 				}
+
+				// --- Fallback ---
+				return u.href.split('?')[0].split('#')[0];
 			} catch {}
-			return (img.src || '').split('?')[0].split('#')[0] || img.src;
+			return img.src;
 		}
 
-		// --- Get server image dimensions ---
+		// --- Fetch server dimensions ---
 		async function getServerImageDimensions(url) {
 			return new Promise(resolve => {
 				const img = new Image();
 				img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
 				img.onerror = () => resolve({ width: 0, height: 0 });
-				img.crossOrigin = "anonymous"; // allows CORS if server permits
+				img.crossOrigin = "anonymous";
 				img.src = url;
 			});
 		}
 
-		// --- Get file size via HEAD ---
+		// --- Fetch file size ---
 		async function getFileSize(url) {
 			try {
 				const resp = await fetch(url, { method: "HEAD" });
@@ -144,7 +149,7 @@
 		});
 
 		for (const img of imgs) {
-			const native = getNativeUrl(img) || img.src;
+			const native = getOriginalUrl(img);
 			let name;
 			try { name = new URL(native, location.href).pathname.split('/').pop() || img.src.split("/").pop().split("?")[0]; } catch { name = img.src.split("/").pop().split("?")[0]; }
 			if (!name) continue;
@@ -167,7 +172,7 @@
 			n++;
 		}
 
-		// --- Badge positioning ---
+		// --- Badge positions ---
 		const updateBadgePositions = () => {
 			const placed = [];
 			for (const b of badges) {
@@ -196,7 +201,7 @@
 		addEventListener("resize", window._imgData.resizeHandler);
 		window._imgData.interval = setInterval(updateBadgePositions,300);
 
-		// --- Overlay setup ---
+		// --- Overlay ---
 		const o = d.createElement("div");
 		o.id="img-data-overlay";
 		window._imgData.overlay=o;
@@ -317,18 +322,16 @@ ${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
 		o.append(mkbar("top"),txt,mkbar("bottom"));
 		d.body.appendChild(o);
 
-		// --- Fetch actual dimensions & size ---
+		// --- Fetch server-original dimensions & size ---
 		(async ()=>{
 			await Promise.all(items.map(async it=>{
-				const dims=await getServerImageDimensions(it.url);
-				const size=await getFileSize(it.url);
-				it.dim=`${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
-				it.size=size;
+				const dims = await getServerImageDimensions(it.url);
+				const size = await getFileSize(it.url);
+				it.dim = `${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
+				it.size = size;
 				update();
 			}));
 		})();
-
-		setTimeout(()=>{updateBadgePositions(); autosize();},150);
 
 		// --- Drag ---
 		let drag=null;
