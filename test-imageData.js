@@ -250,6 +250,8 @@
                     boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                     cursor: "pointer"
                 });
+
+                // Scroll to image
                 link.addEventListener("click", e => {
                     e.preventDefault();
                     const el = d.getElementById(it.anchorId);
@@ -282,6 +284,40 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                     Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
                     txt.appendChild(hr);
                 }
+
+                // Click image link to top overlay
+                infoDiv.querySelector("a").addEventListener("click", e => {
+                    e.preventDefault();
+
+                    const overlay = d.createElement("div");
+                    Object.assign(overlay.style, {
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        background: "rgba(0,0,0,0.85)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 2147483649, // above badges
+                        cursor: "zoom-out"
+                    });
+
+                    const fullImg = d.createElement("img");
+                    fullImg.src = it.url;
+                    Object.assign(fullImg.style, {
+                        maxWidth: "95%",
+                        maxHeight: "95%",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
+                        borderRadius: "6px"
+                    });
+
+                    overlay.appendChild(fullImg);
+                    d.body.appendChild(overlay);
+
+                    overlay.addEventListener("click", () => { overlay.remove(); });
+                });
             });
 
             autosize();
@@ -293,14 +329,12 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
 
         // Populate full size and file size
         items.forEach(it => {
-            // Full dimensions
             const fullImg = new Image();
             fullImg.crossOrigin = "anonymous";
             fullImg.onload = () => { it.fullDim = `${fullImg.naturalWidth}×${fullImg.naturalHeight}`; update(); };
             fullImg.onerror = () => { it.fullDim = "Unavailable"; update(); };
             fullImg.src = it.fullURL;
 
-            // File size
             fetch(it.fullURL, { method: "HEAD" })
                 .then(r => {
                     const cl = r.headers.get("content-length");
