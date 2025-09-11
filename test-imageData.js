@@ -289,6 +289,9 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                 infoDiv.querySelector("a").addEventListener("click", e => {
                     e.preventDefault();
 
+                    // Push badges behind
+                    badges.forEach(b => b.box.style.zIndex = 1);
+
                     const overlay = d.createElement("div");
                     Object.assign(overlay.style, {
                         position: "fixed",
@@ -300,7 +303,7 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        zIndex: 2147483649, // above badges
+                        zIndex: 2147483650, // above badges
                         cursor: "zoom-out"
                     });
 
@@ -316,7 +319,10 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                     overlay.appendChild(fullImg);
                     d.body.appendChild(overlay);
 
-                    overlay.addEventListener("click", () => { overlay.remove(); });
+                    overlay.addEventListener("click", () => { 
+                        overlay.remove(); 
+                        badges.forEach(b => b.box.style.zIndex = 2147483648); // restore badges
+                    });
                 });
             });
 
