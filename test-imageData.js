@@ -267,12 +267,13 @@
 infoDiv.innerHTML = `
 <div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
 <div><strong>Full Size:</strong> ${it.fullDim}</div>
-${it.thumbDim !== it.fullDim ? `<div><strong>Thumbnail:</strong> ${it.thumbDim}</div>` : ""}
+${(it.fullDim !== "Fetching..." && it.thumbDim !== it.fullDim) ? `<div><strong>Thumbnail:</strong> ${it.thumbDim}</div>` : ""}
 <div><strong>Rendered:</strong> ${it.rendered}</div>
 <div><strong>Size:</strong> ${it.size}</div>
 <div><strong>Alt:</strong> ${it.alt}</div>
 ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
 `;
+
 
                 entry.appendChild(infoDiv);
                 txt.appendChild(entry);
