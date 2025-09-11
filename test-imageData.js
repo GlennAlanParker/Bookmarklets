@@ -220,9 +220,10 @@
                 badgeDiv.appendChild(link); entry.appendChild(badgeDiv);
 
                 const infoDiv=d.createElement("div"); infoDiv.style.flex="1"; infoDiv.style.textAlign="left";
-                infoDiv.innerHTML=`<div><strong>Full Image:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:#0066cc;text-decoration:underline;">${it.name}</a></div>
-<div><strong>Thumbnail:</strong> ${it.thumbDim}</div>
+                infoDiv.innerHTML=`<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:#0066cc;text-decoration:underline;">${it.name}</a></div>
 <div><strong>Rendered:</strong> ${it.rendered}</div>
+<div><strong>Thumbnail Intrinsic:</strong> ${it.thumbDim}</div>
+<div><strong>Full Intrinsic:</strong> ${it.fullDim}</div>
 <div><strong>Size:</strong> ${it.size}</div>
 <div><strong>Alt:</strong> ${it.alt}</div>
 ${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
