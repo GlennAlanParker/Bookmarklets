@@ -63,17 +63,45 @@ ${(it.fullWidth && it.fullHeight && (it.thumbWidth!==it.fullWidth||it.thumbHeigh
 <div><strong>Rendered:</strong> ${it.rendered}</div>
 <div><strong>Size:</strong> ${it.size}</div>
 <div><strong>Alt:</strong> ${it.alt}</div>
-${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
-infoDiv.querySelector("a").addEventListener("click",e=>{
+${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;infoDiv.querySelector("a").addEventListener("click", e => {
     e.preventDefault();
-    const overlay=d.createElement("div");
-    Object.assign(overlay.style,{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2147483650,cursor:"zoom-out"});
-    const fullImg=d.createElement("img"); fullImg.src=it.fullURL;
-    Object.assign(fullImg.style,{maxWidth:"95%",maxHeight:"95%",boxShadow:"0 4px 20px rgba(0,0,0,0.6)",borderRadius:"6px",position:"relative",zIndex:1});
-    fullImg.onload=()=>{ it.fullWidth=fullImg.naturalWidth; it.fullHeight=fullImg.naturalHeight; it.fullDim=`${it.fullWidth}×${it.fullHeight}`; update(); };
-    fullImg.onerror=()=>{ it.fullDim="Unavailable"; update(); };
-    overlay.appendChild(fullImg); d.body.appendChild(overlay);
-    overlay.addEventListener("click",()=>overlay.remove());
+    const overlay = d.createElement("div");
+    Object.assign(overlay.style, {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(0,0,0,0.85)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 2147483660,   // higher than badges
+        cursor: "zoom-out"
+    });
+
+    const fullImg = d.createElement("img");
+    fullImg.src = it.fullURL;
+    Object.assign(fullImg.style, {
+        maxWidth: "95%",
+        maxHeight: "95%",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
+        borderRadius: "6px",
+        position: "relative",
+        zIndex: 2147483661   // even above overlay container
+    });
+
+    fullImg.onload = () => {
+        it.fullWidth = fullImg.naturalWidth;
+        it.fullHeight = fullImg.naturalHeight;
+        it.fullDim = `${it.fullWidth}×${it.fullHeight}`;
+        update();
+    };
+    fullImg.onerror = () => { it.fullDim = "Unavailable"; update(); };
+
+    overlay.appendChild(fullImg);
+    d.body.appendChild(overlay);
+    overlay.addEventListener("click", () => overlay.remove());
 });
 entry.appendChild(infoDiv); txt.appendChild(entry);
 if(i<items.length-1){ const hr=d.createElement("hr"); hr.className="img-separator"; Object.assign(hr.style,{margin:"4px 0",border:"none",borderTop:"1px solid #ccc"}); txt.appendChild(hr); }
