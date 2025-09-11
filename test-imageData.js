@@ -207,31 +207,89 @@
 
         const autosize = () => { o.style.height = Math.max(140, Math.min(headerH + txt.scrollHeight + footerH, Math.floor(0.9 * innerHeight))) + "px"; };
 
-        const update = () => {
-            [...txt.querySelectorAll(".img-entry,.img-separator")].forEach(el => el.remove());
-            if (!items.length) { txt.appendChild(Object.assign(d.createElement("div"), { textContent: "No images found." })); return; }
+const update = () => {
+    // Remove previous entries and separators
+    [...txt.querySelectorAll(".img-entry, .img-separator")].forEach(el => el.remove());
 
-            items.forEach((it,i)=>{
-                const entry = d.createElement("div"); entry.className="img-entry"; Object.assign(entry.style,{display:"flex",alignItems:"flex-start",padding:"4px 0"});
-                const badgeDiv = d.createElement("div"); badgeDiv.style.flex=`0 0 ${badgeSize}px`; Object.assign(badgeDiv.style,{display:"flex",alignItems:"center",justifyContent:"center",paddingRight:"10px"});
-                const link = d.createElement("a"); link.href=`#${it.anchorId}`; link.textContent=i+1;
-                Object.assign(link.style,{display:"flex",alignItems:"center",justifyContent:"center",background:"#FFA500",color:"#000",fontWeight:"700",fontSize:"14px",border:"2px solid #000",width:badgeSize+"px",height:badgeSize+"px",lineHeight:badgeSize+"px",textAlign:"center",userSelect:"none",textDecoration:"underline",borderRadius:"4px",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",cursor:"pointer"});
-                link.addEventListener("click",e=>{ e.preventDefault(); const el=d.getElementById(it.anchorId); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); });
-                badgeDiv.appendChild(link); entry.appendChild(badgeDiv);
+    if (!items.length) {
+        const noImagesText = d.createElement("div");
+        noImagesText.textContent = "No images found.";
+        txt.appendChild(noImagesText);
+        return;
+    }
 
-                const infoDiv=d.createElement("div"); infoDiv.style.flex="1"; infoDiv.style.textAlign="left";
-                infoDiv.innerHTML=`<div><strong>Image Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
+    items.forEach((it, i) => {
+        // Skip if name missing
+        if (!it.name) return;
+
+        const entry = d.createElement("div");
+        entry.className = "img-entry";
+        Object.assign(entry.style, { display: "flex", alignItems: "flex-start", padding: "4px 0" });
+
+        const badgeDiv = d.createElement("div");
+        badgeDiv.style.flex = `0 0 ${badgeSize}px`;
+        Object.assign(badgeDiv.style, { display: "flex", alignItems: "center", justifyContent: "center", paddingRight: "10px" });
+
+        const link = d.createElement("a");
+        link.href = `#${it.anchorId}`;
+        link.textContent = i + 1;
+        Object.assign(link.style, {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#FFA500",
+            color: "#000",
+            fontWeight: "700",
+            fontSize: "14px",
+            border: "2px solid #000",
+            width: badgeSize + "px",
+            height: badgeSize + "px",
+            lineHeight: badgeSize + "px",
+            textAlign: "center",
+            userSelect: "none",
+            textDecoration: "underline",
+            borderRadius: "4px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            cursor: "pointer"
+        });
+        link.addEventListener("click", e => {
+            e.preventDefault();
+            const el = d.getElementById(it.anchorId);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        badgeDiv.appendChild(link);
+        entry.appendChild(badgeDiv);
+
+        const infoDiv = d.createElement("div");
+        infoDiv.style.flex = "1";
+        infoDiv.style.textAlign = "left";
+
+        infoDiv.innerHTML = `
+<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${it.name}</a></div>
+<div><strong>Full:</strong> ${it.fullDim}</div>
+<div><strong>Thumbnail:</strong> ${it.thumbDim}</div>
 <div><strong>Rendered:</strong> ${it.rendered}</div>
-<div><strong>Thumbnail Intrinsic:</strong> ${it.thumbDim}</div>
-<div><strong>Full Intrinsic:</strong> ${it.fullDim}</div>
 <div><strong>Size:</strong> ${it.size}</div>
 <div><strong>Alt:</strong> ${it.alt}</div>
-${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
-                entry.appendChild(infoDiv); txt.appendChild(entry);
-                if(i<items.length-1){ const hr=d.createElement("hr"); Object.assign(hr.style,{margin:"4px 0",border:"none",borderTop:"1px solid #ccc"}); txt.appendChild(hr); }
-            });
-            autosize();
-        };
+${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
+`;
+
+        entry.appendChild(infoDiv);
+        txt.appendChild(entry);
+
+        // Only add separator if this is not the last real entry
+        if (i < items.length - 1) {
+            const hr = d.createElement("hr");
+            hr.className = "img-separator";
+            Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
+            txt.appendChild(hr);
+        }
+    });
+
+    autosize();
+};
+
 
         o.append(mkbar("top"),txt,mkbar("bottom"));
         d.body.appendChild(o);
