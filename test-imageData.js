@@ -277,17 +277,9 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                 entry.appendChild(infoDiv);
                 txt.appendChild(entry);
 
-                if (i < items.length - 1) {
-                    const hr = d.createElement("hr");
-                    hr.className = "img-separator";
-                    Object.assign(hr.style, { margin: "4px 0", border: "none", borderTop: "1px solid #ccc" });
-                    txt.appendChild(hr);
-                }
-
-                // Click image link to top overlay
+                // Click name link to open full native image in overlay
                 infoDiv.querySelector("a").addEventListener("click", e => {
                     e.preventDefault();
-
                     const overlay = d.createElement("div");
                     Object.assign(overlay.style, {
                         position: "fixed",
@@ -299,12 +291,12 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        zIndex: 2147483650, // ABOVE badges
+                        zIndex: 2147483650,
                         cursor: "zoom-out"
                     });
 
                     const fullImg = d.createElement("img");
-                    fullImg.src = it.url;
+                    fullImg.src = it.fullURL; // load full native image
                     Object.assign(fullImg.style, {
                         maxWidth: "95%",
                         maxHeight: "95%",
@@ -317,9 +309,7 @@ ${it.caption ? `<div><strong>Caption:</strong> ${it.caption}</div>` : ""}
                     overlay.appendChild(fullImg);
                     d.body.appendChild(overlay);
 
-                    overlay.addEventListener("click", () => {
-                        overlay.remove();
-                    });
+                    overlay.addEventListener("click", () => overlay.remove());
                 });
             });
 
