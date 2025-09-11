@@ -1,4 +1,4 @@
-(() => {
+javascript:(() => {
 	try {
 		const LSK = "imgDataOverlay_v1";
 
@@ -282,11 +282,9 @@
 
 		const scrollTopBtn=d.createElement("div"); scrollTopBtn.textContent="↑";
 		Object.assign(scrollTopBtn.style,{position:"absolute",bottom:"10px",right:"10px",width:"30px",height:"30px",background:"#FFA500",color:"#000",display:"none",alignItems:"center",justifyContent:"center",borderRadius:"50%",cursor:"pointer",fontSize:"16px",fontWeight:"bold",boxShadow:"0 2px 8px rgba(0,0,0,0.3)",zIndex:"10",transition:"all 0.2s ease",userSelect:"none",pointerEvents:"auto"});
-
 		scrollTopBtn.addEventListener("mouseenter",()=>{scrollTopBtn.style.background="#e67e22"; scrollTopBtn.style.transform="scale(1.1)";});
 		scrollTopBtn.addEventListener("mouseleave",()=>{scrollTopBtn.style.background="#FFA500"; scrollTopBtn.style.transform="scale(1)";});
 		scrollTopBtn.addEventListener("click",()=>{txt.scrollTo({top:0,behavior:"smooth"});});
-
 		txt.appendChild(scrollTopBtn);
 
 		txt.addEventListener("scroll",()=>{scrollTopBtn.style.display=txt.scrollTop>20?"flex":"none";});
@@ -322,21 +320,27 @@ ${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
 		o.append(mkbar("top"),txt,mkbar("bottom"));
 		d.body.appendChild(o);
 
-		// --- Fetch server-original dimensions & size ---
+		// --- FETCH actual server dimensions & file size ---
 		(async ()=>{
 			await Promise.all(items.map(async it=>{
-				const dims = await getServerImageDimensions(it.url);
-				const size = await getFileSize(it.url);
-				it.dim = `${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
-				it.size = size;
-				update();
+				try {
+					const dims = await getServerImageDimensions(it.url);
+					const size = await getFileSize(it.url);
+					it.dim = `${dims.width}×${dims.height} actual, ${it.renderedWidth}×${it.renderedHeight} rendered`;
+					it.size = size;
+					update();
+				} catch(e){
+					it.dim = `${it.renderedWidth}×${it.renderedHeight} rendered only`;
+					it.size = "Unknown";
+					update();
+				}
 			}));
 		})();
 
 		// --- Drag ---
 		let drag=null;
 		const startDrag=e=>{if(e.target.closest("[data-drag-ignore]"))return; const r=o.getBoundingClientRect(); drag={dx:e.clientX-r.left,dy:e.clientY-r.top}; e.preventDefault();};
-		const onDrag=e=>{if(!drag)return;o.style.left=(e.clientX-drag.dx)+"px";o.style.top=(e.clientY-drag.dy)+"px";o.style.right="auto";};
+		const onDrag=e=>{if(!drag)return;o.style.left=(e.clientX-drag.dx)+"px";o.style.top=(e.clientY-drag.dy)+"px"; o.style.right="auto";};
 		const endDrag=()=>{drag=null;};
 		d.addEventListener("pointermove",onDrag);
 		d.addEventListener("pointerup",endDrag);
