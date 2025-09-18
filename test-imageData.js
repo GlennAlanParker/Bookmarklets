@@ -109,13 +109,44 @@ if(i<items.length-1){ const hr=d.createElement("hr"); hr.className="img-separato
 autosize();
 };
 o.append(mkbar("top"),txt,mkbar("bottom")); d.body.appendChild(o); update();
-items.forEach(it=>{
-    const fullImg=new Image(); fullImg.crossOrigin="anonymous";
-    fullImg.onload=()=>{ it.fullWidth=fullImg.naturalWidth; it.fullHeight=fullImg.naturalHeight; it.fullDim=`${it.fullWidth}×${it.fullHeight}`; update(); };
-    fullImg.onerror=()=>{ it.fullDim="Unavailable"; update(); };
-    fullImg.src=it.fullURL;
-    fetch(it.fullURL,{method:"HEAD"}).then(r=>{ const cl=r.headers.get("content-length"); it.size=cl?formatSize(parseInt(cl,10)):"Unknown"; update(); }).catch(()=>{ fetch(it.fullURL).then(r=>r.blob()).then(b=>{ it.size=formatSize(b.size); update(); }).catch(()=>{ it.size="Unavailable"; update(); }); });
+items.forEach(it => {
+    const fullImg = new Image();
+    // remove crossOrigin unless you specifically need it
+    // fullImg.crossOrigin = "anonymous";
+
+    fullImg.onload = () => {
+        it.fullWidth = fullImg.naturalWidth;
+        it.fullHeight = fullImg.naturalHeight;
+        it.fullDim = `${it.fullWidth}×${it.fullHeight}`;
+        update(); // safe to update after setting values
+    };
+
+    fullImg.onerror = () => {
+        if (!it.fullDim || it.fullDim === "Fetching...") {
+            it.fullDim = "Unavailable";
+            update();
+        }
+    };
+
+    fullImg.src = it.fullURL;
+
+    // safer HEAD request
+    fetch(it.fullURL, { method: "HEAD" }).then(r => {
+        const cl = r.headers.get("content-length");
+        it.size = cl ? formatSize(parseInt(cl, 10)) : "Unknown";
+        update();
+    }).catch(() => {
+        // fallback: GET if HEAD fails
+        fetch(it.fullURL).then(r => r.blob()).then(b => {
+            it.size = formatSize(b.size);
+            update();
+        }).catch(() => {
+            it.size = "Unavailable";
+            update();
+        });
+    });
 });
+
 setTimeout(()=>{ updateBadgePositions(); },150);
 // Drag
 let drag=null;
