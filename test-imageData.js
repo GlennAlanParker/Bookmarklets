@@ -205,6 +205,56 @@ autosize();
 };
 o.append(mkbar("top"),txt,mkbar("bottom")); d.body.appendChild(o); update();
 
+
+function loadFullSizeSequentially(index = 0) {
+    if (index >= items.length) return;
+
+    const it = items[index];
+    const fullImg = new Image();
+
+    fullImg.onload = () => {
+        it.fullWidth = fullImg.naturalWidth;
+        it.fullHeight = fullImg.naturalHeight;
+        it.fullDim = `${it.fullWidth}×${it.fullHeight}`;
+        update();
+        // move to the next image
+        loadFullSizeSequentially(index + 1);
+    };
+
+    fullImg.onerror = () => {
+        it.fullDim = "Unavailable";
+        update();
+        loadFullSizeSequentially(index + 1);
+    };
+
+    fullImg.src = it.fullURL;
+
+    // get file size
+    fetch(it.fullURL, { method: "HEAD" })
+        .then(r => {
+            const cl = r.headers.get("content-length");
+            it.size = cl ? formatSize(parseInt(cl, 10)) : "Unknown";
+            update();
+        })
+        .catch(() => {
+            fetch(it.fullURL)
+                .then(r => r.blob())
+                .then(b => {
+                    it.size = formatSize(b.size);
+                    update();
+                })
+                .catch(() => {
+                    it.size = "Unavailable";
+                    update();
+                });
+        });
+}
+
+// start sequential loading
+loadFullSizeSequentially();
+
+    
+
 // Preload full images to get natural size and content-length
 items.forEach(it=>{
     if(!it.fullURL) { it.fullDim = "Unavailable"; it.size = "Unknown"; return; }
