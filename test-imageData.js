@@ -78,7 +78,48 @@ const imgs = [...d.images].filter(e => {
     return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
 });
 
-const createBadge=(img,index)=>{ const badge=d.createElement("div"); badge.textContent=index; Object.assign(badge.style,{position:"absolute",display:"flex",alignItems:"center",justifyContent:"center",background:"#FFA500",color:"#000",fontWeight:"700",fontSize:"14px",border:"2px solid #000",width:badgeSize+"px",height:badgeSize+"px",lineHeight:badgeSize+"px",textAlign:"center",userSelect:"none",cursor:"default",borderRadius:"4px",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",zIndex:2147483648}); d.body.appendChild(badge); badges.push({img,box:badge}); };
+const createBadge = (img, index) => {
+    const badge = d.createElement("div");
+    badge.textContent = index;
+    Object.assign(badge.style, {
+        position: "absolute",
+        top: "-8px",
+        left: "-8px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#FFA500",
+        color: "#000",
+        fontWeight: "700",
+        fontSize: "14px",
+        border: "2px solid #000",
+        width: badgeSize + "px",
+        height: badgeSize + "px",
+        lineHeight: badgeSize + "px",
+        textAlign: "center",
+        userSelect: "none",
+        cursor: "default",
+        borderRadius: "4px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+        zIndex: 2147483648
+    });
+
+    // ensure parent is positioned
+    const parent = img.parentElement;
+    if (parent) {
+        const prevPos = getComputedStyle(parent).position;
+        if (prevPos === "static") {
+            parent.style.position = "relative";
+        }
+        parent.appendChild(badge);
+    } else {
+        // fallback in case image has no parent (very rare)
+        img.style.position = img.style.position || "relative";
+        img.appendChild(badge);
+    }
+
+    badges.push({ img, box: badge });
+};
 
 for(const img of imgs){
     const name=(img.src.split("/").pop().split("?")[0])||"";
