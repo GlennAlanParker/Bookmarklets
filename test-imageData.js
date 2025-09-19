@@ -113,7 +113,7 @@ const createBadge = (img, index) => {
         }
         parent.appendChild(badge);
     } else {
-        // fallback in case image has no parent (very rare)
+        // fallback in case no parent
         img.style.position = img.style.position || "relative";
         img.appendChild(badge);
     }
@@ -133,29 +133,6 @@ for(const img of imgs){
         fullDim:"Fetching...", fullWidth:null, fullHeight:null, size:"Fetching..." });
     createBadge(img,n); n++;
 }
-
-const updateBadgePositions=()=>{
-    const placed=[];
-    for(const b of badges){
-        try{
-            const r=b.img.getBoundingClientRect();
-            let x=Math.max(margin,Math.min(d.documentElement.scrollWidth-badgeSize-margin,Math.round(r.left+window.scrollX-8)));
-            let y=Math.max(margin,Math.min(d.documentElement.scrollHeight-badgeSize-margin,Math.round(r.top+window.scrollY-8)));
-            for(const p of placed){
-                if(Math.abs(p.x-x)<badgeSize+8 && !((y+badgeSize+vGap<p.y)||y>p.y+p.bh+vGap)){
-                    y=p.y+p.bh+vGap;
-                    y=Math.min(y,d.documentElement.scrollHeight-badgeSize-margin);
-                }
-            }
-            Object.assign(b.box.style,{left:x+"px",top:y+"px",display:window._imgData.badgesVisible?"flex":"none"});
-            placed.push({x,y,bw:badgeSize,bh:badgeSize});
-        } catch(e){}
-    }
-};
-updateBadgePositions(); setTimeout(updateBadgePositions,80);
-window._imgData.scrollHandler=updateBadgePositions; window._imgData.resizeHandler=updateBadgePositions;
-addEventListener("scroll",window._imgData.scrollHandler); addEventListener("resize",window._imgData.resizeHandler);
-window._imgData.interval=setInterval(updateBadgePositions,300);
 
 const o=d.createElement("div"); o.id="img-data-overlay"; window._imgData.overlay=o;
 Object.assign(o.style,{position:"fixed",top:"10px",right:"0",width:"520px",height:"240px",maxHeight:"95vh",display:"flex",flexDirection:"column",background:"#f8f9fa",font:"12px Arial, sans-serif",zIndex:2147483647,border:"1px solid #ccc",borderRadius:"10px",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",overflow:"hidden"});
