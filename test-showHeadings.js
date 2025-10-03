@@ -19,13 +19,19 @@ javascript:(() => {
         // Add dashed outline with the chosen color
         heading.style.outline = `2px dashed ${color}`;
 
-        // Add faint background highlight
-        heading.style.backgroundColor = color;
-        heading.style.opacity = "0.15"; // makes it faint without overpowering text
+        // Add faint background highlight using rgba for transparency
+        heading.style.backgroundColor = {
+            red: "rgba(255, 0, 0, 0.15)",
+            blue: "rgba(0, 0, 255, 0.15)",
+            green: "rgba(0, 128, 0, 0.15)",
+            purple: "rgba(128, 0, 128, 0.15)",
+            teal: "rgba(0, 128, 128, 0.15)",
+            maroon: "rgba(128, 0, 0, 0.15)"
+        }[color] || "rgba(0,0,0,0.05)";
 
         // Create a span to show the tag name
         const label = document.createElement("span");
-        label.style.color = color;
+        label.style.color = "inherit"; // keep same text color as heading
         label.style.fontSize = "small";
         label.style.marginLeft = "5px";
         label.textContent = `[${tag}]`;
