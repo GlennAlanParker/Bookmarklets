@@ -2,7 +2,7 @@ javascript:(function(){
     const colors = {
         H1: "#FF0000", // Red
         H2: "#FF7F00", // Orange
-        H3: "#FFFF00", // Yellow
+        H3: "#00FFFF", // Cyan 
         H4: "#00FF00", // Green
         H5: "#0000FF", // Blue
         H6: "#8B00FF"  // Violet
@@ -26,7 +26,7 @@ javascript:(function(){
             top: 0;
             left: 0;
             background: ${colors[h.tagName]};
-            color: #fff;
+            color: #000;
             font-size: 12px;
             font-family: sans-serif;
             font-weight: bold;
