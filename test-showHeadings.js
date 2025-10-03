@@ -13,15 +13,27 @@ javascript:(() => {
 
         // Background color only, no padding/margin changes
         heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.2)";
+        heading.style.boxSizing = "border-box"; // ensures background doesn't add height
 
-        // Create a small label inline so it doesn't resize container
-        const label = document.createElement("span");
-        label.style.color = color;
-        label.style.fontSize = "small";
-        label.style.marginLeft = "0.3em"; // minimal spacing
-        label.textContent = `[${tag}]`;
-        label.style.display = "inline"; // ensures it doesn't create a block
-
-        heading.appendChild(label);
+        // Add a pseudo-element for [tag] instead of appending a span
+        heading.style.position = "relative";
+        if (!heading.dataset.tagAdded) { // prevent duplicates
+            const style = document.createElement("style");
+            style.innerHTML = `
+                h1[data-tag-added="true"]::after,
+                h2[data-tag-added="true"]::after,
+                h3[data-tag-added="true"]::after,
+                h4[data-tag-added="true"]::after,
+                h5[data-tag-added="true"]::after,
+                h6[data-tag-added="true"]::after {
+                    content: " [${tag}]";
+                    font-size: 0.8em;
+                    color: ${color};
+                    display: inline;
+                }
+            `;
+            document.head.appendChild(style);
+            heading.dataset.tagAdded = "true";
+        }
     });
 })();
