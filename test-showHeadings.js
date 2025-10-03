@@ -9,14 +9,14 @@ javascript:(() => {
         h6: "maroon"
     };
 
-    // Semi-transparent background colors (slightly stronger for visibility)
+    // Stronger semi-transparent background colors for clarity
     const bgColors = {
-        red: "rgba(255, 0, 0, 0.25)",
-        blue: "rgba(0, 0, 255, 0.25)",
-        green: "rgba(0, 128, 0, 0.25)",
-        purple: "rgba(128, 0, 128, 0.25)",
-        teal: "rgba(0, 128, 128, 0.25)",
-        maroon: "rgba(128, 0, 0, 0.25)"
+        red: "rgba(255, 0, 0, 0.4)",
+        blue: "rgba(0, 0, 255, 0.4)",
+        green: "rgba(0, 128, 0, 0.4)",
+        purple: "rgba(128, 0, 128, 0.4)",
+        teal: "rgba(0, 128, 128, 0.4)",
+        maroon: "rgba(128, 0, 0, 0.4)"
     };
 
     // Select all headings (h1–h6)
@@ -26,15 +26,16 @@ javascript:(() => {
         const tag = heading.tagName.toLowerCase();
         const color = colors[tag] || "black";
 
-        // Add dashed outline (does not affect text color)
+        // Add dashed outline
         heading.style.outline = `2px dashed ${color}`;
 
-        // Add semi-transparent background highlight
-        heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.1)";
+        // Add a solid enough background for visibility
+        heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.2)";
+        heading.style.padding = "2px 4px"; // add padding so background doesn't cut text
 
-        // Create a small label to show the tag name
+        // Create a small label for the heading level
         const label = document.createElement("span");
-        label.style.color = color; // only the label uses the outline color
+        label.style.color = color; // only the label uses the color
         label.style.fontSize = "small";
         label.style.marginLeft = "5px";
         label.textContent = `[${tag}]`;
