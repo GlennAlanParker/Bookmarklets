@@ -1,11 +1,11 @@
 javascript:(function(){
     const colors = {
-        H1: "#FF0000", // Red
-        H2: "#FF7F00", // Orange
-        H3: "#00FFFF", // Cyan 
-        H4: "#00FF00", // Green
-        H5: "#0000FF", // Blue
-        H6: "#8B00FF"  // Violet
+        H1: "#D32F2F", // Dark Red
+        H2: "#F57C00", // Dark Orange
+        H3: "#0288D1", // Dark Blue
+        H4: "#388E3C", // Dark Green
+        H5: "#7B1FA2", // Purple
+        H6: "#FBC02D"  // Amber
     };
     
     const headings = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
@@ -26,7 +26,7 @@ javascript:(function(){
             top: 0;
             left: 0;
             background: ${colors[h.tagName]};
-            color: #000;
+            color: #fff;
             font-size: 12px;
             font-family: sans-serif;
             font-weight: bold;
@@ -36,5 +36,5 @@ javascript:(function(){
         h.prepend(label);
     });
     
-    alert(`Outlined and labeled ${headings.length} headings!`);
+    alert(\`Outlined and labeled ${headings.length} headings!\`);
 })();
