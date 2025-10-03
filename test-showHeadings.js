@@ -8,19 +8,19 @@ javascript:(() => {
         const tag = heading.tagName.toLowerCase();
         const color = colors[tag] || "black";
 
-        // Force outline with !important
+        // Force outline with !important without affecting layout
         heading.style.setProperty("outline", `2px dashed ${color}`, "important");
 
-        // Solid background for visibility
+        // Background color only, no padding/margin changes
         heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.2)";
-        heading.style.padding = "2px 4px";
 
-        // Add heading level label
+        // Create a small label inline so it doesn't resize container
         const label = document.createElement("span");
         label.style.color = color;
         label.style.fontSize = "small";
-        label.style.marginLeft = "5px";
+        label.style.marginLeft = "0.3em"; // minimal spacing
         label.textContent = `[${tag}]`;
+        label.style.display = "inline"; // ensures it doesn't create a block
 
         heading.appendChild(label);
     });
