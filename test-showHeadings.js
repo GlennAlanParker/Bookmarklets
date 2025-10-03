@@ -29,12 +29,12 @@ javascript:(() => {
         // Add dashed outline with the chosen color
         heading.style.outline = `2px dashed ${color}`;
 
-        // Add faint background highlight without affecting text color
+        // Add faint background highlight WITHOUT changing text color
         heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.05)";
 
         // Create a span to show the tag name
         const label = document.createElement("span");
-        label.style.color = color; // label uses the heading’s outline color
+        label.style.color = color; // only the label gets the highlight color
         label.style.fontSize = "small";
         label.style.marginLeft = "5px";
         label.textContent = `[${tag}]`;
