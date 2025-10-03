@@ -4,36 +4,40 @@ javascript:(() => {
 
     const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
 
-    headings.forEach(heading => {
+    headings.forEach((heading, index) => {
         const tag = heading.tagName.toLowerCase();
         const color = colors[tag] || "black";
 
-        // Force outline with !important without affecting layout
+        // Apply outline safely
         heading.style.setProperty("outline", `2px dashed ${color}`, "important");
 
-        // Background color only, no padding/margin changes
+        // Apply background safely
         heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.2)";
-        heading.style.boxSizing = "border-box"; // ensures background doesn't add height
+        heading.style.boxSizing = "border-box";
+        heading.style.position = "relative"; // needed for pseudo-element
 
-        // Add a pseudo-element for [tag] instead of appending a span
-        heading.style.position = "relative";
-        if (!heading.dataset.tagAdded) { // prevent duplicates
+        // Assign correct label in a data attribute
+        heading.dataset.headingTag = tag;
+
+        // Only add the style once
+        if (!document.getElementById("heading-label-style")) {
             const style = document.createElement("style");
-            style.innerHTML = `
-                h1[data-tag-added="true"]::after,
-                h2[data-tag-added="true"]::after,
-                h3[data-tag-added="true"]::after,
-                h4[data-tag-added="true"]::after,
-                h5[data-tag-added="true"]::after,
-                h6[data-tag-added="true"]::after {
-                    content: " [${tag}]";
+            style.id = "heading-label-style";
+            style.textContent = `
+                h1[data-heading-tag]::after,
+                h2[data-heading-tag]::after,
+                h3[data-heading-tag]::after,
+                h4[data-heading-tag]::after,
+                h5[data-heading-tag]::after,
+                h6[data-heading-tag]::after {
+                    content: " [" attr(data-heading-tag) "]";
                     font-size: 0.8em;
-                    color: ${color};
+                    color: inherit; /* inherits heading text color */
+                    margin-left: 0.3em;
                     display: inline;
                 }
             `;
             document.head.appendChild(style);
-            heading.dataset.tagAdded = "true";
         }
     });
 })();
