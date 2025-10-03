@@ -9,6 +9,16 @@ javascript:(() => {
         h6: "maroon"
     };
 
+    // Semi-transparent background versions of the same colors
+    const bgColors = {
+        red: "rgba(255, 0, 0, 0.15)",
+        blue: "rgba(0, 0, 255, 0.15)",
+        green: "rgba(0, 128, 0, 0.15)",
+        purple: "rgba(128, 0, 128, 0.15)",
+        teal: "rgba(0, 128, 128, 0.15)",
+        maroon: "rgba(128, 0, 0, 0.15)"
+    };
+
     // Select all headings (h1–h6)
     const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
 
@@ -19,19 +29,12 @@ javascript:(() => {
         // Add dashed outline with the chosen color
         heading.style.outline = `2px dashed ${color}`;
 
-        // Add faint background highlight using rgba for transparency
-        heading.style.backgroundColor = {
-            red: "rgba(255, 0, 0, 0.15)",
-            blue: "rgba(0, 0, 255, 0.15)",
-            green: "rgba(0, 128, 0, 0.15)",
-            purple: "rgba(128, 0, 128, 0.15)",
-            teal: "rgba(0, 128, 128, 0.15)",
-            maroon: "rgba(128, 0, 0, 0.15)"
-        }[color] || "rgba(0,0,0,0.05)";
+        // Add faint background highlight without affecting text color
+        heading.style.backgroundColor = bgColors[color] || "rgba(0,0,0,0.05)";
 
         // Create a span to show the tag name
         const label = document.createElement("span");
-        label.style.color = "inherit"; // keep same text color as heading
+        label.style.color = color; // label uses the heading’s outline color
         label.style.fontSize = "small";
         label.style.marginLeft = "5px";
         label.textContent = `[${tag}]`;
