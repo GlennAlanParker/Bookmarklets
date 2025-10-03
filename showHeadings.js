@@ -10,12 +10,12 @@ javascript:(function() {
 
     // Define colors for each heading level
     const colors = {
-        H1: "#003366",
-        H2: "#006400",
-        H3: "#660000",
-        H4: "#663399",
-        H5: "#FF8C00",
-        H6: "#2F4F4F"
+        H1: "#0050A0",
+        H2: "#008000",
+        H3: "#990000",
+        H4: "#8A2BE2",
+        H5: "#CC7700",
+        H6: "#4A6C6C"
     };
 
     // Select all headings on the page
