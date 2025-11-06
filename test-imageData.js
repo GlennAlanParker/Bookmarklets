@@ -1,5 +1,42 @@
 javascript:(() => {
 try {
+(function removeImageQueryStrings() {
+    try {
+        const imgs = document.querySelectorAll("img");
+        imgs.forEach(img => {
+            // Clean src
+            if (img.src) {
+                try {
+                    const u = new URL(img.src, location.href);
+                    u.search = "";
+                    const clean = u.href;
+                    if (clean !== img.src) img.src = clean;
+                } catch(e){}
+            }
+
+            // Clean srcset
+            const srcset = img.getAttribute("srcset");
+            if (srcset) {
+                try {
+                    const parts = srcset.split(",").map(s => s.trim()).filter(Boolean);
+                    const cleaned = parts.map(p => {
+                        const m = p.match(/^(\S+)(\s+\d+[wx])?$/);
+                        if (!m) return p;
+                        try {
+                            const u = new URL(m[1], location.href);
+                            u.search = "";
+                            return u.href + (m[2] || "");
+                        } catch(e) {
+                            return p;
+                        }
+                    });
+                    const newSet = cleaned.join(", ");
+                    if (newSet !== srcset) img.setAttribute("srcset", newSet);
+                } catch(e){}
+            }
+        });
+    } catch(e){ console.warn("Querystring removal error", e); }
+})();
 const d = document, badges = [], items = [];
 let n = 1, badgeSize = 26, vGap = 6, margin = 6;
 if (window._imgData?.cleanup) window._imgData.cleanup();
