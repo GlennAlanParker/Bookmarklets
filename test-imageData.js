@@ -1,329 +1,189 @@
 javascript:(() => {
 try {
-(function removeImageQueryStrings() {
-    try {
-        const imgs = document.querySelectorAll("img");
-        imgs.forEach(img => {
-            // Clean src
-            if (img.src) {
+    // === MAIN EXECUTION WRAPPER ===
+    // Wraps everything in a try/catch to prevent page-breaking errors.
+
+    const d = document, badges = [], items = [];
+    let n = 1, badgeSize = 26, vGap = 6, margin = 6;
+
+    // === CLEANUP PREVIOUS RUN ===
+    // If the script ran before, remove any old overlays.
+    if (window._imgData?.cleanup) window._imgData.cleanup();
+    window._imgData = { cleanup: () => badges.forEach(b => b.remove()) };
+
+    // === CREATE OVERLAY CONTAINER ===
+    // Holds badges for each image found on the page.
+    const o = d.createElement("div");
+    o.style.cssText = `
+        position:fixed;
+        top:${margin}px;
+        right:${margin}px;
+        z-index:999999;
+        font:12px sans-serif;
+        color:#fff;
+        background:#000c;
+        padding:8px;
+        border-radius:8px;
+        box-shadow:0 2px 8px #0008;
+        max-height:calc(100vh - ${margin * 2}px);
+        overflow:auto;
+        cursor:move;
+    `;
+    o.dataset.dragHandle = true;
+    d.body.appendChild(o);
+
+    // === CREATE STATUS DISPLAY ===
+    // Displays script version and live count of images processed.
+    const h = d.createElement("div");
+    h.textContent = `Image Info v${n}`;
+    h.style.cssText = "font-weight:bold;margin-bottom:4px;";
+    o.appendChild(h);
+    const c = d.createElement("div");
+    o.appendChild(c);
+
+    // === UPDATE FUNCTION ===
+    // Refreshes image list overlay content.
+    function update() {
+        c.innerHTML = "";
+        items.forEach(it => {
+            const line = d.createElement("div");
+            line.style.cssText = "border-top:1px solid #333;padding:4px 0;";
+
+            // Display image number and key details.
+            line.innerHTML = `
+                <div><b>#${it.i}</b> ${it.fullURL ? `<a href="${it.fullURL}" target="_blank" style="color:#6cf;">${it.fileName}</a>` : it.fileName}</div>
+                <div>Full: ${it.fullDim || "Loading..."}</div>
+                <div>Rendered: ${it.rendWidth} × ${it.rendHeight}</div>
+                <div>Size: ${it.size || "Loading..."}</div>
+            `;
+            c.appendChild(line);
+        });
+    }
+
+    // === FORMAT SIZE FUNCTION ===
+    // Converts bytes into KB/MB with two decimal precision.
+    function formatSize(bytes) {
+        if (!bytes || isNaN(bytes)) return "Unavailable";
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1048576) return `${(bytes / 1024).toFixed(2)} KB`;
+        return `${(bytes / 1048576).toFixed(2)} MB`;
+    }
+
+    // === UPDATE BADGE POSITIONS ===
+    // Keeps info badges aligned with their images on scroll/resize.
+    function updateBadgePositions() {
+        badges.forEach(b => {
+            const rect = b._img.getBoundingClientRect();
+            b.style.top = (window.scrollY + rect.top + vGap) + "px";
+            b.style.left = (window.scrollX + rect.left + vGap) + "px";
+        });
+    }
+    window.addEventListener("scroll", updateBadgePositions);
+    window.addEventListener("resize", updateBadgePositions);
+
+    // === PROCESS IMAGES ===
+    // Loops through all <img> elements on the page and collects data.
+    const imgs = Array.from(d.images);
+    imgs.forEach((img, i) => {
+        const it = {
+            i: i + 1,
+            img,
+            fullURL: (() => {
                 try {
                     const u = new URL(img.src, location.href);
-                    u.search = "";
-                    const clean = u.href;
-                    if (clean !== img.src) img.src = clean;
-                } catch(e){}
-            }
-
-            // Clean srcset
-            const srcset = img.getAttribute("srcset");
-            if (srcset) {
-                try {
-                    const parts = srcset.split(",").map(s => s.trim()).filter(Boolean);
-                    const cleaned = parts.map(p => {
-                        const m = p.match(/^(\S+)(\s+\d+[wx])?$/);
-                        if (!m) return p;
-                        try {
-                            const u = new URL(m[1], location.href);
-                            u.search = "";
-                            return u.href + (m[2] || "");
-                        } catch(e) {
-                            return p;
-                        }
-                    });
-                    const newSet = cleaned.join(", ");
-                    if (newSet !== srcset) img.setAttribute("srcset", newSet);
-                } catch(e){}
-            }
-        });
-    } catch(e){ console.warn("Querystring removal error", e); }
-})();
-
-const d = document, badges = [], items = [];
-let n = 1, badgeSize = 26, vGap = 6, margin = 6;
-if (window._imgData?.cleanup) window._imgData.cleanup();
-window._imgData = { badges, badgesVisible: true, cleanup() {
-    try { badges.forEach(b => b.box?.remove()); badges.length = 0;
-          if(this.scrollHandler) removeEventListener("scroll", this.scrollHandler);
-          if(this.resizeHandler) removeEventListener("resize", this.resizeHandler);
-          if(this.interval) clearInterval(this.interval);
-          if(this.overlay) this.overlay.remove(); } catch(e){console.warn("Cleanup error",e);} } };
-
-// helpers
-const formatSize = b => { 
-    if(!b) return "Unknown"; 
-    if(b < 1024) return b + " B"; 
-    let kb = b / 1024; 
-    if(kb < 1024) return kb.toFixed(2) + " KB"; 
-    return (kb / 1024).toFixed(2) + " MB"; 
-};
-const looksLikeImageURL = u => {
-    if(!u) return false;
-    u = String(u).trim();
-    if(u.startsWith('data:') || u.startsWith('blob:')) return true;
-    try { const parsed = new URL(u, location.href); u = parsed.href; } catch(e){}
-    return (/\.(jpe?g|png|gif|webp|svg|bmp|tiff)(\?.*)?$/i).test(u);
-};
-const pickFromSrcset = srcset => {
-    if(!srcset) return null;
-    const parts = srcset.split(',').map(p => p.trim()).filter(Boolean);
-    if(!parts.length) return null;
-    let best = null, bestW = -1;
-    for(const p of parts){
-        const m = p.match(/^\s*(\S+)(?:\s+(\d+)w)?\s*$/);
-        if(m){
-            const url = m[1];
-            const w = m[2]?parseInt(m[2],10):-1;
-            if(w > bestW){ bestW = w; best = url; }
-            if(bestW === -1) best = url;
-        }
-    }
-    return best || null;
-};
-const getDataAttr = (img, keys) => {
-    for(const k of keys){
-        if(img.dataset && img.dataset[k]) return img.dataset[k];
-        const attr = img.getAttribute && img.getAttribute(k);
-        if(attr) return attr;
-    }
-    return null;
-};
-const getBestFullURL = img => {
-    const a = img.closest && img.closest("a");
-    const aHref = a?.href;
-    if(aHref && looksLikeImageURL(aHref)) return aHref;
-    const cand = getDataAttr(img, ['full','fullsrc','original','src','large_image','fullsrcset','data-src','data-original','data-full','data-large','data-full-url']);
-    if(cand && looksLikeImageURL(cand)) return cand;
-    if(img.currentSrc && looksLikeImageURL(img.currentSrc)) return img.currentSrc;
-    const srcset = img.getAttribute && img.getAttribute('srcset');
-    const fromSrcset = pickFromSrcset(srcset);
-    if(fromSrcset && looksLikeImageURL(fromSrcset)) {
-        try { return new URL(fromSrcset, location.href).href; } catch(e) { return fromSrcset; }
-    }
-    if(img.src) return img.src;
-    return aHref || img.src || "";
-};
-
-// collect images
-const imgs = [...d.images].filter(e => {
-    const s=(e.src||"").toLowerCase(), alt=(e.alt||"").toLowerCase();
-    return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
-});
-
-const createBadge=(img,index)=>{ const badge=d.createElement("div"); badge.textContent=index; Object.assign(badge.style,{position:"absolute",display:"flex",alignItems:"center",justifyContent:"center",background:"#FFA500",color:"#000",fontWeight:"700",fontSize:"14px",border:"2px solid #000",width:badgeSize+"px",height:badgeSize+"px",lineHeight:badgeSize+"px",textAlign:"center",userSelect:"none",cursor:"default",borderRadius:"4px",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",zIndex:2147483648}); d.body.appendChild(badge); badges.push({img,box:badge}); };
-
-for(const img of imgs){
-    const name=(img.src.split("/").pop().split("?")[0])||"";
-    if(!name) continue;
-    img.id=`imgData_${n}`;
-    const caption=(img.closest("figure")?.querySelector(".caption")?.innerText||"").trim();
-    const guessedFull = getBestFullURL(img);
-    items.push({ name, anchorId: img.id, url: img.src, caption, alt: img.alt||"None",
-        rendered:`${img.width}×${img.height}`, fullURL: guessedFull,
-        fullDim:"Fetching...", fullWidth:null, fullHeight:null, size:"Fetching..." });
-    createBadge(img,n); n++;
-}
-
-const updateBadgePositions=()=>{
-    const placed=[];
-    for(const b of badges){
-        try{
-            const r=b.img.getBoundingClientRect();
-            let x=Math.max(margin,Math.min(d.documentElement.scrollWidth-badgeSize-margin,Math.round(r.left+window.scrollX-8)));
-            let y=Math.max(margin,Math.min(d.documentElement.scrollHeight-badgeSize-margin,Math.round(r.top+window.scrollY-8)));
-            for(const p of placed){
-                if(Math.abs(p.x-x)<badgeSize+8 && !((y+badgeSize+vGap<p.y)||y>p.y+p.bh+vGap)){
-                    y=p.y+p.bh+vGap;
-                    y=Math.min(y,d.documentElement.scrollHeight-badgeSize-margin);
+                    u.search = ""; // Remove query strings from URL
+                    return u.href;
+                } catch {
+                    return null;
                 }
-            }
-            Object.assign(b.box.style,{left:x+"px",top:y+"px",display:window._imgData.badgesVisible?"flex":"none"});
-            placed.push({x,y,bw:badgeSize,bh:badgeSize});
-        } catch(e){}
-    }
-};
-updateBadgePositions(); setTimeout(updateBadgePositions,80);
-window._imgData.scrollHandler=updateBadgePositions; window._imgData.resizeHandler=updateBadgePositions;
-addEventListener("scroll",window._imgData.scrollHandler); addEventListener("resize",window._imgData.resizeHandler);
-window._imgData.interval=setInterval(updateBadgePositions,300);
+            })(),
+            fileName: img.src.split("/").pop().split("?")[0],
+            rendWidth: img.clientWidth,
+            rendHeight: img.clientHeight
+        };
+        items.push(it);
 
-const o=d.createElement("div"); o.id="img-data-overlay"; window._imgData.overlay=o;
-Object.assign(o.style,{position:"fixed",top:"10px",right:"0",width:"520px",height:"240px",maxHeight:"95vh",display:"flex",flexDirection:"column",background:"#f8f9fa",font:"12px Arial, sans-serif",zIndex:2147483647,border:"1px solid #ccc",borderRadius:"10px",boxShadow:"0 4px 12px rgba(0,0,0,0.15)",overflow:"hidden"});
-const headerH=56,footerH=14;
-const mkbar=pos=>{ const b=d.createElement("div"); Object.assign(b.style,{height:pos==="top"?headerH+"px":footerH+"px",display:"flex",alignItems:"center",justifyContent:pos==="top"?"space-between":"flex-end",padding:pos==="top"?"6px 10px":"2px 8px",background:"#34495e",color:"#fff",fontWeight:700,cursor:"grab",userSelect:"none"});
-if(pos==="top"){ const title=d.createElement("h1"); title.textContent="Image Data"; Object.assign(title.style,{margin:0,color:"#fff",fontSize:"16px",textAlign:"left"}); b.appendChild(title);
-const btns=d.createElement("div"); btns.style.display="flex"; btns.style.alignItems="center"; btns.style.gap="8px";
-const toggleGroup=d.createElement("div"); Object.assign(toggleGroup.style,{display:"flex",alignItems:"center",background:"#5D6D7E",color:"#fff",borderRadius:"6px",padding:"2px 6px",cursor:"pointer",userSelect:"none",height:(badgeSize+6)+"px",boxShadow:"0 2px 6px rgba(0,0,0,0.2)",transition:"background 0.2s ease, transform 0.2s ease"});
-const label=d.createElement("span"); label.textContent="Toggle Badges"; Object.assign(label.style,{fontSize:"12px",marginRight:"6px"}); toggleGroup.appendChild(label);
-const toggleBtn=d.createElement("button"); toggleBtn.textContent="🔢"; Object.assign(toggleBtn.style,{border:"none",background:"transparent",fontSize:"14px",cursor:"pointer",color:"#fff"}); toggleGroup.appendChild(toggleBtn);
-toggleGroup.onclick=e=>{ e.stopPropagation(); window._imgData.badgesVisible=!window._imgData.badgesVisible; badges.forEach(bb=>bb.box.style.display=window._imgData.badgesVisible?"flex":"none"); };
-toggleGroup.addEventListener("mouseenter",()=>{toggleGroup.style.background="#4A5A6A";toggleGroup.style.transform="scale(1.05)";});
-toggleGroup.addEventListener("mouseleave",()=>{toggleGroup.style.background="#5D6D7E";toggleGroup.style.transform="scale(1)";});
-btns.appendChild(toggleGroup);
-const x=d.createElement("div"); x.textContent="×"; x.title="Close"; Object.assign(x.style,{cursor:"pointer",fontSize:"14px",padding:0,margin:"0 0 0 12px",borderRadius:"50%",width:"20px",height:"20px",background:"#e74c3c",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}); x.setAttribute("data-drag-ignore","1"); x.onclick=e=>{ e.stopPropagation(); o.remove(); window._imgData.cleanup(); }; btns.appendChild(x);
-b.appendChild(btns); }
-b.setAttribute("data-drag-handle","1"); return b; };
+        // === CREATE FLOATING BADGE ===
+        // Displays index label beside the corresponding image.
+        const b = d.createElement("div");
+        b.textContent = it.i;
+        b.style.cssText = `
+            position:absolute;
+            background:#000c;
+            color:#fff;
+            width:${badgeSize}px;
+            height:${badgeSize}px;
+            border-radius:50%;
+            text-align:center;
+            line-height:${badgeSize}px;
+            font-weight:bold;
+            font-size:13px;
+            pointer-events:none;
+            user-select:none;
+        `;
+        b._img = img;
+        d.body.appendChild(b);
+        badges.push(b);
 
-const txt=d.createElement("div"); Object.assign(txt.style,{padding:"10px",overflow:"auto",flex:"1",background:"#fff",position:"relative",textAlign:"left",color:"#333"});
-const autosize=()=>{ o.style.height=Math.max(140,Math.min(headerH+txt.scrollHeight+footerH,Math.floor(0.9*innerHeight)))+"px"; };
-
-const update=()=>{
-[...txt.querySelectorAll(".img-entry,.img-separator")].forEach(el=>el.remove());
-if(!items.length){ const noImagesText=d.createElement("div"); noImagesText.textContent="No images found."; txt.appendChild(noImagesText); return; }
-items.forEach((it,i)=>{
-if(!it.name) return;
-const entry=d.createElement("div"); entry.className="img-entry"; Object.assign(entry.style,{display:"flex",alignItems:"flex-start",padding:"4px 0"});
-const badgeDiv=d.createElement("div"); badgeDiv.style.flex=`0 0 ${badgeSize}px`; Object.assign(badgeDiv.style,{display:"flex",alignItems:"center",justifyContent:"center",paddingRight:"10px"});
-const link=d.createElement("a"); link.href=`#${it.anchorId}`; link.textContent=i+1; Object.assign(link.style,{display:"flex",alignItems:"center",justifyContent:"center",background:"#FFA500",color:"#000",fontWeight:"700",fontSize:"14px",border:"2px solid #000",width:badgeSize+"px",height:badgeSize+"px",lineHeight:badgeSize+"px",textAlign:"center",userSelect:"none",textDecoration:"underline",borderRadius:"4px",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",cursor:"pointer"});
-link.addEventListener("click",e=>{ e.preventDefault(); const el=d.getElementById(it.anchorId); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); });
-badgeDiv.appendChild(link); entry.appendChild(badgeDiv);
-const infoDiv=d.createElement("div"); infoDiv.style.flex="1"; infoDiv.style.textAlign="left";
-
-infoDiv.innerHTML=`<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:#0066cc;text-decoration:underline;">${it.name}</a></div>
-<div><strong>Full Size:</strong> ${it.fullDim}</div>
-<div><strong>Rendered:</strong> ${it.rendered}</div>
-<div><strong>Size:</strong> ${it.size}</div>
-<div><strong>Alt:</strong> ${it.alt}</div>
-${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
-
-infoDiv.querySelector("a").addEventListener("click", e => {
-    e.preventDefault();
-    const overlay = d.createElement("div");
-    Object.assign(overlay.style, {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        background: "rgba(0,0,0,0.85)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2147483660,
-        cursor: "zoom-out"
-    });
-
-    const fullImg = d.createElement("img");
-    fullImg.src = it.fullURL || it.url;
-    Object.assign(fullImg.style, {
-        maxWidth: "95%",
-        maxHeight: "95%",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
-        borderRadius: "6px",
-        position: "relative",
-        zIndex: 2147483661
-    });
-
-    fullImg.onload = () => {
-        it.fullWidth = fullImg.naturalWidth || it.fullWidth;
-        it.fullHeight = fullImg.naturalHeight || it.fullHeight;
-        it.fullDim = (it.fullWidth && it.fullHeight) ? `${it.fullWidth}×${it.fullHeight}` : it.fullDim;
-        update();
-    };
-    fullImg.onerror = () => { it.fullDim = it.fullDim || "Unavailable"; update(); };
-
-    overlay.appendChild(fullImg);
-    d.body.appendChild(overlay);
-    overlay.addEventListener("click", () => overlay.remove());
-});
-
-entry.appendChild(infoDiv); txt.appendChild(entry);
-if(i<items.length-1){ const hr=d.createElement("hr"); hr.className="img-separator"; Object.assign(hr.style,{margin:"4px 0",border:"none",borderTop:"1px solid #ccc"}); txt.appendChild(hr); }
-});
-autosize();
-};
-o.append(mkbar("top"),txt,mkbar("bottom")); d.body.appendChild(o); update();
-
-// load full-size dimensions and file sizes
-function loadFullSizeSequentially(index = 0) {
-    if (index >= items.length) return;
-    const it = items[index];
-    const fullImg = new Image();
-
-    fullImg.onload = () => {
-        it.fullWidth = fullImg.naturalWidth;
-        it.fullHeight = fullImg.naturalHeight;
-        it.fullDim = `${it.fullWidth}×${it.fullHeight}`;
-        update();
-        loadFullSizeSequentially(index + 1);
-    };
-
-    fullImg.onerror = () => {
-        it.fullDim = "Unavailable";
-        update();
-        loadFullSizeSequentially(index + 1);
-    };
-
-    fullImg.src = it.fullURL;
-    fetch(it.fullURL, { method: "HEAD" })
-        .then(r => {
-            const cl = r.headers.get("content-length");
-            it.size = cl ? formatSize(parseInt(cl, 10)) : "Unknown";
-            update();
-        })
-        .catch(() => {
-            fetch(it.fullURL)
-                .then(r => r.blob())
-                .then(b => {
-                    it.size = formatSize(b.size);
-                    update();
-                })
-                .catch(() => {
-                    it.size = "Unavailable";
-                    update();
-                });
-        });
-}
-loadFullSizeSequentially();
-
-// preload full images
-items.forEach(it=>{
-    if(!it.fullURL) { it.fullDim = "Unavailable"; it.size = "Unknown"; return; }
-    try {
+        // === GET FULL IMAGE DIMENSIONS AND SIZE ===
+        // Loads the image separately to measure natural size and fetch file size.
         const pre = new Image();
-        pre.decoding = "async";
         pre.onload = () => {
-            if(pre.naturalWidth > 0 && pre.naturalHeight > 0){
-                it.fullWidth = pre.naturalWidth;
-                it.fullHeight = pre.naturalHeight;
-                it.fullDim = `${it.fullWidth}×${it.fullHeight}`;
-            } else {
-                it.fullDim = it.fullDim || "Unavailable";
-            }
+            it.fullDim = `${pre.naturalWidth} × ${pre.naturalHeight}`;
             update();
         };
         pre.onerror = () => {
-            if(!it.fullWidth && !it.fullHeight) it.fullDim = it.fullDim || "Unavailable";
+            if (!it.fullWidth && !it.fullHeight) it.fullDim = it.fullDim || "Unavailable";
             update();
         };
         pre.src = it.fullURL;
+
+        // === FETCH FILE SIZE VIA HEAD REQUEST ===
         fetch(it.fullURL, { method: "HEAD" }).then(r => {
             const cl = r.headers.get("content-length");
-            it.size = cl ? formatSize(parseInt(cl,10)) : "Unknown";
+            it.size = cl ? formatSize(parseInt(cl, 10)) : "Unknown";
             update();
-        }).catch(()=>{
+        }).catch(() => {
+            // Fallback: full GET fetch if HEAD fails.
             fetch(it.fullURL).then(r => {
-                if(!r.ok) throw new Error("Fetch failed");
+                if (!r.ok) throw new Error("Fetch failed");
                 return r.blob();
             }).then(b => {
                 it.size = formatSize(b.size);
                 update();
-            }).catch(()=>{ it.size = it.size || "Unavailable"; update(); });
+            }).catch(() => {
+                it.size = it.size || "Unavailable";
+                update();
+            });
         });
-    } catch(e){
-        it.fullDim = it.fullDim || "Unavailable";
-        it.size = it.size || "Unavailable";
-        update();
-    }
-});
+    });
 
-setTimeout(()=>{ updateBadgePositions(); },150);
+    // Initial badge positioning after slight delay.
+    setTimeout(() => { updateBadgePositions(); }, 150);
 
-// Drag
-let drag=null;
-const startDrag=e=>{ if(e.target.closest("[data-drag-ignore]")) return; const r=o.getBoundingClientRect(); drag={dx:e.clientX-r.left,dy:e.clientY-r.top}; e.preventDefault(); };
-const onDrag=e=>{ if(!drag) return; o.style.left=(e.clientX-drag.dx)+"px"; o.style.top=(e.clientY-drag.dy)+"px"; o.style.right="auto"; };
-const endDrag=()=>{ drag=null; };
-d.addEventListener("pointermove",onDrag); d.addEventListener("pointerup",endDrag); d.querySelectorAll("[data-drag-handle]").forEach(b=>b.onpointerdown=startDrag);
+    // === DRAG FUNCTIONALITY ===
+    // Allows moving the overlay panel around the viewport.
+    let drag = null;
+    const startDrag = e => {
+        if (e.target.closest("[data-drag-ignore]")) return;
+        const r = o.getBoundingClientRect();
+        drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+        e.preventDefault();
+    };
+    const onDrag = e => {
+        if (!drag) return;
+        o.style.left = (e.clientX - drag.dx) + "px";
+        o.style.top = (e.clientY - drag.dy) + "px";
+        o.style.right = "auto";
+    };
+    const endDrag = () => { drag = null; };
 
-} catch(e){ console.error(e); }
+    // Attach drag handlers
+    d.addEventListener("pointermove", onDrag);
+    d.addEventListener("pointerup", endDrag);
+    d.querySelectorAll("[data-drag-handle]").forEach(b => b.onpointerdown = startDrag);
+
+} catch (e) {
+    console.error(e);
+}
 })();
