@@ -37,6 +37,7 @@ try {
         });
     } catch(e){ console.warn("Querystring removal error", e); }
 })();
+
 const d = document, badges = [], items = [];
 let n = 1, badgeSize = 26, vGap = 6, margin = 6;
 if (window._imgData?.cleanup) window._imgData.cleanup();
@@ -47,7 +48,7 @@ window._imgData = { badges, badgesVisible: true, cleanup() {
           if(this.interval) clearInterval(this.interval);
           if(this.overlay) this.overlay.remove(); } catch(e){console.warn("Cleanup error",e);} } };
 
-// small helpers
+// helpers
 const formatSize = b => { 
     if(!b) return "Unknown"; 
     if(b < 1024) return b + " B"; 
@@ -59,7 +60,6 @@ const looksLikeImageURL = u => {
     if(!u) return false;
     u = String(u).trim();
     if(u.startsWith('data:') || u.startsWith('blob:')) return true;
-    // absolute/relative http(s) or path
     try { const parsed = new URL(u, location.href); u = parsed.href; } catch(e){}
     return (/\.(jpe?g|png|gif|webp|svg|bmp|tiff)(\?.*)?$/i).test(u);
 };
@@ -67,7 +67,6 @@ const pickFromSrcset = srcset => {
     if(!srcset) return null;
     const parts = srcset.split(',').map(p => p.trim()).filter(Boolean);
     if(!parts.length) return null;
-    // try to pick the candidate with the largest 'w' descriptor
     let best = null, bestW = -1;
     for(const p of parts){
         const m = p.match(/^\s*(\S+)(?:\s+(\d+)w)?\s*$/);
@@ -75,7 +74,7 @@ const pickFromSrcset = srcset => {
             const url = m[1];
             const w = m[2]?parseInt(m[2],10):-1;
             if(w > bestW){ bestW = w; best = url; }
-            if(bestW === -1) best = url; // fallback to last if no widths provided
+            if(bestW === -1) best = url;
         }
     }
     return best || null;
@@ -89,33 +88,22 @@ const getDataAttr = (img, keys) => {
     return null;
 };
 const getBestFullURL = img => {
-    // 1) anchor href if it looks like an image
     const a = img.closest && img.closest("a");
     const aHref = a?.href;
     if(aHref && looksLikeImageURL(aHref)) return aHref;
-
-    // 2) obvious data attributes used by many libraries
     const cand = getDataAttr(img, ['full','fullsrc','original','src','large_image','fullsrcset','data-src','data-original','data-full','data-large','data-full-url']);
     if(cand && looksLikeImageURL(cand)) return cand;
-
-    // 3) currentSrc (chosen by browser from srcset)
     if(img.currentSrc && looksLikeImageURL(img.currentSrc)) return img.currentSrc;
-
-    // 4) parse srcset for the largest candidate
     const srcset = img.getAttribute && img.getAttribute('srcset');
     const fromSrcset = pickFromSrcset(srcset);
     if(fromSrcset && looksLikeImageURL(fromSrcset)) {
         try { return new URL(fromSrcset, location.href).href; } catch(e) { return fromSrcset; }
     }
-
-    // 5) fallback to the image src
     if(img.src) return img.src;
-
-    // last resort: anchor even if not clearly an image (keeps original behavior)
     return aHref || img.src || "";
 };
 
-// collect images (filter out QR/data)
+// collect images
 const imgs = [...d.images].filter(e => {
     const s=(e.src||"").toLowerCase(), alt=(e.alt||"").toLowerCase();
     return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
@@ -130,8 +118,7 @@ for(const img of imgs){
     const caption=(img.closest("figure")?.querySelector(".caption")?.innerText||"").trim();
     const guessedFull = getBestFullURL(img);
     items.push({ name, anchorId: img.id, url: img.src, caption, alt: img.alt||"None",
-        rendered:`${img.width}×${img.height}`, thumbDim:`${img.naturalWidth}×${img.naturalHeight}`,
-        thumbWidth:img.naturalWidth, thumbHeight:img.naturalHeight, fullURL: guessedFull,
+        rendered:`${img.width}×${img.height}`, fullURL: guessedFull,
         fullDim:"Fetching...", fullWidth:null, fullHeight:null, size:"Fetching..." });
     createBadge(img,n); n++;
 }
@@ -193,7 +180,6 @@ const infoDiv=d.createElement("div"); infoDiv.style.flex="1"; infoDiv.style.text
 
 infoDiv.innerHTML=`<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:#0066cc;text-decoration:underline;">${it.name}</a></div>
 <div><strong>Full Size:</strong> ${it.fullDim}</div>
-${(it.fullWidth && it.fullHeight && (it.thumbWidth!==it.fullWidth||it.thumbHeight!==it.fullHeight))?`<div><strong>Thumbnail:</strong> ${it.thumbDim}</div>`:""}
 <div><strong>Rendered:</strong> ${it.rendered}</div>
 <div><strong>Size:</strong> ${it.size}</div>
 <div><strong>Alt:</strong> ${it.alt}</div>
@@ -228,7 +214,6 @@ infoDiv.querySelector("a").addEventListener("click", e => {
     });
 
     fullImg.onload = () => {
-        // if overlay load gives us dimensions, update item
         it.fullWidth = fullImg.naturalWidth || it.fullWidth;
         it.fullHeight = fullImg.naturalHeight || it.fullHeight;
         it.fullDim = (it.fullWidth && it.fullHeight) ? `${it.fullWidth}×${it.fullHeight}` : it.fullDim;
@@ -248,10 +233,9 @@ autosize();
 };
 o.append(mkbar("top"),txt,mkbar("bottom")); d.body.appendChild(o); update();
 
-
+// load full-size dimensions and file sizes
 function loadFullSizeSequentially(index = 0) {
     if (index >= items.length) return;
-
     const it = items[index];
     const fullImg = new Image();
 
@@ -260,7 +244,6 @@ function loadFullSizeSequentially(index = 0) {
         it.fullHeight = fullImg.naturalHeight;
         it.fullDim = `${it.fullWidth}×${it.fullHeight}`;
         update();
-        // move to the next image
         loadFullSizeSequentially(index + 1);
     };
 
@@ -271,8 +254,6 @@ function loadFullSizeSequentially(index = 0) {
     };
 
     fullImg.src = it.fullURL;
-
-    // get file size
     fetch(it.fullURL, { method: "HEAD" })
         .then(r => {
             const cl = r.headers.get("content-length");
@@ -292,20 +273,15 @@ function loadFullSizeSequentially(index = 0) {
                 });
         });
 }
-
-// start sequential loading
 loadFullSizeSequentially();
 
-    
-
-// Preload full images to get natural size and content-length
+// preload full images
 items.forEach(it=>{
     if(!it.fullURL) { it.fullDim = "Unavailable"; it.size = "Unknown"; return; }
     try {
         const pre = new Image();
         pre.decoding = "async";
         pre.onload = () => {
-            // Accept preload dimensions if they are meaningful and larger than 0
             if(pre.naturalWidth > 0 && pre.naturalHeight > 0){
                 it.fullWidth = pre.naturalWidth;
                 it.fullHeight = pre.naturalHeight;
@@ -316,19 +292,15 @@ items.forEach(it=>{
             update();
         };
         pre.onerror = () => {
-            // Could not preload; mark Unavailable for now (but size/head fallback continues below)
             if(!it.fullWidth && !it.fullHeight) it.fullDim = it.fullDim || "Unavailable";
             update();
         };
         pre.src = it.fullURL;
-
-        // try HEAD for content-length; if CORS prevents HEAD, fallback to GET -> blob
         fetch(it.fullURL, { method: "HEAD" }).then(r => {
             const cl = r.headers.get("content-length");
             it.size = cl ? formatSize(parseInt(cl,10)) : "Unknown";
             update();
         }).catch(()=>{
-            // HEAD failed (CORS or not supported): try GET and measure blob
             fetch(it.fullURL).then(r => {
                 if(!r.ok) throw new Error("Fetch failed");
                 return r.blob();
