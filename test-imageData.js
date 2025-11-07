@@ -48,7 +48,13 @@ window._imgData = { badges, badgesVisible: true, cleanup() {
           if(this.overlay) this.overlay.remove(); } catch(e){console.warn("Cleanup error",e);} } };
 
 // small helpers
-const formatSize = b => { if(!b) return "Unknown"; if(b<1024) return b+" B"; let kb=b/1024; if(kb<1024) return kb.toFixed(1)+" KB"; return (kb/1024).toFixed(1)+" MB"; };
+const formatSize = b => { 
+    if(!b) return "Unknown"; 
+    if(b < 1024) return b + " B"; 
+    let kb = b / 1024; 
+    if(kb < 1024) return kb.toFixed(2) + " KB"; 
+    return (kb / 1024).toFixed(2) + " MB"; 
+};
 const looksLikeImageURL = u => {
     if(!u) return false;
     u = String(u).trim();
