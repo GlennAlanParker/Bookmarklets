@@ -391,4 +391,25 @@ try {
     d.querySelectorAll("[data-drag-handle]").forEach(b=>b.onpointerdown=startDrag);
 
 } catch(e){ console.error(e); }
+
+// --- Ensure all jQuery lightboxes and overlays stay above numbered badges ---
+const ensureLightboxZ = document.createElement('style');
+ensureLightboxZ.textContent = `
+    .lightbox, 
+    .jquery-lightbox, 
+    .fancybox-container, 
+    .featherlight, 
+    .mfp-wrap, 
+    .lg-backdrop, 
+    .lg-outer, 
+    .lightboxOverlay, 
+    #lightbox, 
+    .ui-dialog, 
+    .modal, 
+    .overlay {
+        z-index: 2147483700 !important;
+    }
+`;
+document.head.appendChild(ensureLightboxZ);
+    
 })();
