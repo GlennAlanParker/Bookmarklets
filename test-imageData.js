@@ -5,26 +5,23 @@ try {
         try {
             const imgs = document.querySelectorAll("img");
             imgs.forEach(img => {
-                // --- Clean src ---
                 if (img.src) {
                     try {
-                        const u = new URL(img.src, location.href); // ⚠️ May throw if img.src is malformed
-                        u.search = ""; // Remove query string
+                        const u = new URL(img.src, location.href);
+                        u.search = "";
                         const clean = u.href;
                         if (clean !== img.src) img.src = clean;
-                    } catch(e){ /* intentionally silent; bad URL will remain as-is */ }
+                    } catch(e){}
                 }
-
-                // --- Clean srcset ---
                 const srcset = img.getAttribute("srcset");
                 if (srcset) {
                     try {
                         const parts = srcset.split(",").map(s => s.trim()).filter(Boolean);
                         const cleaned = parts.map(p => {
                             const m = p.match(/^(\S+)(\s+\d+[wx])?$/);
-                            if (!m) return p; // ⚠️ Invalid srcset entry will remain unchanged
+                            if (!m) return p;
                             try {
-                                const u = new URL(m[1], location.href); // ⚠️ Can throw if relative URL is broken
+                                const u = new URL(m[1], location.href);
                                 u.search = "";
                                 return u.href + (m[2] || "");
                             } catch(e) {
@@ -33,7 +30,7 @@ try {
                         });
                         const newSet = cleaned.join(", ");
                         if (newSet !== srcset) img.setAttribute("srcset", newSet);
-                    } catch(e){ /* silent fallback if srcset parsing fails */ }
+                    } catch(e){}
                 }
             });
         } catch(e){ console.warn("Querystring removal error", e); }
@@ -42,14 +39,13 @@ try {
     const d = document, badges = [], items = [];
     let n = 1, badgeSize = 26, vGap = 6, margin = 6;
 
-    // --- Cleanup previous instance of _imgData ---
     if (window._imgData?.cleanup) window._imgData.cleanup();
     window._imgData = {
         badges,
         badgesVisible: true,
         cleanup() {
             try { 
-                badges.forEach(b => b.box?.remove()); // ⚠️ Badge DOM removal may fail if already removed
+                badges.forEach(b => b.box?.remove());
                 badges.length = 0;
                 if(this.scrollHandler) removeEventListener("scroll", this.scrollHandler);
                 if(this.resizeHandler) removeEventListener("resize", this.resizeHandler);
@@ -59,7 +55,6 @@ try {
         } 
     };
 
-    // --- Helper functions ---
     const formatSize = b => { 
         if(!b) return "Unknown"; 
         if(b < 1024) return b + " B"; 
@@ -72,7 +67,7 @@ try {
         if(!u) return false;
         u = String(u).trim();
         if(u.startsWith('data:') || u.startsWith('blob:')) return true;
-        try { const parsed = new URL(u, location.href); u = parsed.href; } catch(e){ /* malformed URL is false */ }
+        try { const parsed = new URL(u, location.href); u = parsed.href; } catch(e){}
         return (/\.(jpe?g|png|gif|webp|svg|bmp|tiff)(\?.*)?$/i).test(u);
     };
 
@@ -87,7 +82,7 @@ try {
                 const url = m[1];
                 const w = m[2]?parseInt(m[2],10):-1;
                 if(w > bestW){ bestW = w; best = url; }
-                if(bestW === -1) best = url; // ⚠️ If width unknown, first image is chosen
+                if(bestW === -1) best = url;
             }
         }
         return best || null;
@@ -97,7 +92,7 @@ try {
         for(const k of keys){
             if(img.dataset && img.dataset[k]) return img.dataset[k];
             const attr = img.getAttribute && img.getAttribute(k);
-            if(attr) return attr; // ⚠️ Will return first matching attribute even if invalid URL
+            if(attr) return attr;
         }
         return null;
     };
@@ -112,19 +107,17 @@ try {
         const srcset = img.getAttribute && img.getAttribute('srcset');
         const fromSrcset = pickFromSrcset(srcset);
         if(fromSrcset && looksLikeImageURL(fromSrcset)) {
-            try { return new URL(fromSrcset, location.href).href; } catch(e) { return fromSrcset; } // ⚠️ Relative srcset URL may fail
+            try { return new URL(fromSrcset, location.href).href; } catch(e) { return fromSrcset; }
         }
         if(img.src) return img.src;
         return aHref || img.src || "";
     };
 
-    // --- Filter images to exclude QR/data URLs ---
     const imgs = [...d.images].filter(e => {
         const s=(e.src||"").toLowerCase(), alt=(e.alt||"").toLowerCase();
         return s && !s.includes("qrcode") && !alt.includes("qr") && !s.startsWith("data:");
     });
 
-    // --- Badge creation ---
     const createBadge=(img,index)=>{ 
         const badge=d.createElement("div"); 
         badge.textContent=index; 
@@ -138,10 +131,8 @@ try {
         }); 
         d.body.appendChild(badge); 
         badges.push({img,box:badge});
-        // ⚠️ Appending many badges may impact performance on pages with hundreds of images
     };
 
-    // --- Collect image metadata ---
     for(const img of imgs){
         const name=(img.src.split("/").pop().split("?")[0])||"";
         if(!name) continue;
@@ -157,7 +148,6 @@ try {
         n++;
     }
 
-    // --- Badge positioning logic ---
     const updateBadgePositions=()=>{
         const placed=[];
         for(const b of badges){
@@ -166,7 +156,6 @@ try {
                 let x=Math.max(margin,Math.min(d.documentElement.scrollWidth-badgeSize-margin,Math.round(r.left+window.scrollX-8)));
                 let y=Math.max(margin,Math.min(d.documentElement.scrollHeight-badgeSize-margin,Math.round(r.top+window.scrollY-8)));
                 for(const p of placed){
-                    // ⚠️ Prevent overlap with previously placed badges; tricky math may occasionally misplace badges
                     if(Math.abs(p.x-x)<badgeSize+8 && !((y+badgeSize+vGap<p.y)||y>p.y+p.bh+vGap)){
                         y=p.y+p.bh+vGap;
                         y=Math.min(y,d.documentElement.scrollHeight-badgeSize-margin);
@@ -188,7 +177,6 @@ try {
     addEventListener("resize",window._imgData.resizeHandler);
     window._imgData.interval=setInterval(updateBadgePositions,300);
 
-    // --- Overlay creation ---
     const o=d.createElement("div"); 
     o.id="img-data-overlay"; 
     window._imgData.overlay=o;
@@ -201,7 +189,6 @@ try {
         overflow:"hidden"
     });
 
-    // --- Header/Footer creation, update function, and auto-sizing logic ---
     const headerH=56, footerH=14;
 
     const mkbar=pos=>{
@@ -222,7 +209,6 @@ try {
 
             const btns=d.createElement("div"); btns.style.display="flex"; btns.style.alignItems="center"; btns.style.gap="8px";
 
-            // --- Badge toggle group ---
             const toggleGroup=d.createElement("div"); 
             Object.assign(toggleGroup.style,{
                 display:"flex", alignItems:"center", background:"#5D6D7E",
@@ -266,7 +252,6 @@ try {
         o.style.height=Math.max(140,Math.min(headerH+txt.scrollHeight+footerH,Math.floor(0.9*innerHeight)))+"px"; 
     };
 
-    // --- Main update function to render image entries ---
     const update=()=>{
         [...txt.querySelectorAll(".img-entry,.img-separator")].forEach(el=>el.remove());
         if(!items.length){ 
@@ -295,15 +280,18 @@ try {
             link.addEventListener("click",e=>{ e.preventDefault(); const el=d.getElementById(it.anchorId); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); });
             badgeDiv.appendChild(link); entry.appendChild(badgeDiv);
 
+            const altText = it.alt || "None";
+            const altLen = (it.alt && it.alt !== "None") ? ` (${it.alt.length})` : "";
+            const captionText = it.caption ? `${it.caption} (${it.caption.length})` : "";
+
             const infoDiv=d.createElement("div"); infoDiv.style.flex="1"; infoDiv.style.textAlign="left";
             infoDiv.innerHTML=`<div><strong>Name:</strong> <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:#0066cc;text-decoration:underline;">${it.name}</a></div>
             <div><strong>Image Size:</strong> ${it.fullDim}</div>
             <div><strong>Rendered:</strong> ${it.rendered}</div>
             <div><strong>File Size:</strong> ${it.size}</div>
-            <div><strong>Alt:</strong> ${it.alt}</div>
-            ${it.caption?`<div><strong>Caption:</strong> ${it.caption}</div>`:""}`;
+            <div><strong>Alt:</strong> ${altText}${altLen}</div>
+            ${it.caption?`<div><strong>Caption:</strong> ${captionText}</div>`:""}`;
 
-            // --- Click to view full-size overlay ---
             infoDiv.querySelector("a").addEventListener("click", e => {
                 e.preventDefault();
                 const overlay = d.createElement("div");
@@ -345,11 +333,11 @@ try {
         });
         autosize();
     };
+
     o.append(mkbar("top"),txt,mkbar("bottom")); 
     d.body.appendChild(o); 
     update();
 
-    // --- Sequentially load full-size images and fetch file sizes ---
     function loadFullSizeSequentially(index = 0) {
         if (index >= items.length) return;
         const it = items[index];
@@ -367,7 +355,6 @@ try {
             loadFullSizeSequentially(index + 1);
         };
         fullImg.src = it.fullURL;
-        // Attempt HEAD request to get size
         fetch(it.fullURL, { method: "HEAD" })
             .then(r => {
                 const cl = r.headers.get("content-length");
@@ -375,7 +362,6 @@ try {
                 update();
             })
             .catch(() => {
-                // Fallback to fetch blob if HEAD fails
                 fetch(it.fullURL)
                     .then(r => r.blob())
                     .then(b => { it.size = formatSize(b.size); update(); })
@@ -386,7 +372,6 @@ try {
     loadFullSizeSequentially();
     setTimeout(()=>{ updateBadgePositions(); },150);
 
-    // --- Drag functionality ---
     let drag=null;
     const startDrag=e=>{ 
         if(e.target.closest("[data-drag-ignore]")) return; 
