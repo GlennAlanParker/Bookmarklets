@@ -148,27 +148,31 @@ try {
         n++;
     }
 
-    const updateBadgePositions=()=>{
-        const placed=[];
-        for(const b of badges){
-            try{
-                const r=b.img.getBoundingClientRect();
-                let x=Math.max(margin,Math.min(d.documentElement.scrollWidth-badgeSize-margin,Math.round(r.left+window.scrollX-8)));
-                let y=Math.max(margin,Math.min(d.documentElement.scrollHeight-badgeSize-margin,Math.round(r.top+window.scrollY-8)));
-                for(const p of placed){
-                    if(Math.abs(p.x-x)<badgeSize+8 && !((y+badgeSize+vGap<p.y)||y>p.y+p.bh+vGap)){
-                        y=p.y+p.bh+vGap;
-                        y=Math.min(y,d.documentElement.scrollHeight-badgeSize-margin);
-                    }
-                }
-                Object.assign(b.box.style,{
-                    left:x+"px", top:y+"px",
-                    display:window._imgData.badgesVisible?"flex":"none"
-                });
-                placed.push({x,y,bw:badgeSize,bh:badgeSize});
-            } catch(e){}
+const updateBadgePositions = () => {
+    for (const b of badges) {
+        try {
+            const r = b.img.getBoundingClientRect();
+
+            // Ensure badge stays within image bounds
+            const badgeW = badgeSize;
+            const badgeH = badgeSize;
+            const imgW = r.width;
+            const imgH = r.height;
+
+            const x = Math.round(r.left + window.scrollX + Math.min(2, Math.max(0, imgW - badgeW)));
+            const y = Math.round(r.top + window.scrollY + Math.min(2, Math.max(0, imgH - badgeH)));
+
+            Object.assign(b.box.style, {
+                left: x + "px",
+                top: y + "px",
+                display: window._imgData.badgesVisible ? "flex" : "none"
+            });
+        } catch (e) {
+            console.warn("Badge placement error", e);
         }
-    };
+    }
+};
+
     updateBadgePositions(); 
     setTimeout(updateBadgePositions,150);
     window._imgData.scrollHandler=updateBadgePositions; 
