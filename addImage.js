@@ -7,9 +7,8 @@ javascript:(function () {
             top:${window.pageYOffset + 100}px;
             left:${window.pageXOffset + 100}px;
             z-index:999999;
-            background:#fff;
+            background:transparent;
             cursor:move;
-            border:1px solid #000;
             overflow:hidden;
         `;
 
@@ -53,9 +52,6 @@ javascript:(function () {
 
         function startDrag(ev) {
             if (locked) return;
-            // Only allow drag if clicking overlay or image (not resize handles)
-            if (resizeHandles.includes(ev.target)) return;
-
             dragging = true;
             const r = overlay.getBoundingClientRect();
             offX = ev.pageX - (r.left + window.pageXOffset);
@@ -90,8 +86,8 @@ javascript:(function () {
             h.style.cssText = `
                 position:absolute;
                 width:12px;height:12px;
-                background:black;
-                border:1px solid black;
+                background:transparent;
+                border:none;
                 cursor:${dir}-resize;
                 transform:translate(-50%,-50%);
                 left:${pos[dir][0]};
