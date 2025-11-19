@@ -52,7 +52,7 @@ javascript:(function() {
         overlay.appendChild(img);
         overlay.appendChild(btn);
 
-        /* ---------- Resizing Handles ---------- */
+        /* ---------- Resize Handles ---------- */
         function addResizeHandles(el) {
             const dirs = ["n","ne","e","se","s","sw","w","nw"];
             dirs.forEach(dir => {
@@ -89,59 +89,100 @@ javascript:(function() {
             });
         }
 
-function startResize(e, dir, el) {
-    const startX = e.pageX, startY = e.pageY;
-    const rect = el.getBoundingClientRect();
-    const sX = window.pageXOffset, sY = window.pageYOffset;
+        /* ---------- PROPORTIONAL RESIZE LOGIC ---------- */
+        function startResize(e, dir, el) {
+            const startX = e.pageX;
+            const startY = e.pageY;
+            const rect = el.getBoundingClientRect();
+            const sX = window.pageXOffset, sY = window.pageYOffset;
 
-    const img = el.querySelector("img");
-    const ratio = img ? img.naturalWidth / img.naturalHeight : 1;
+            const img = el.querySelector("img");
+            const ratio = img ? img.naturalWidth / img.naturalHeight : 1;
 
-    function onMove(ev) {
-        const dx = ev.pageX - startX;
-        const dy = ev.pageY - startY;
+            function onMove(ev) {
+                const dx = ev.pageX - startX;
+                const dy = ev.pageY - startY;
 
-        let w = rect.width;
-        let h = rect.height;
-        let l = rect.left + sX;
-        let t = rect.top + sY;
+                let w = rect.width;
+                let h = rect.height;
+                let l = rect.left + sX;
+                let t = rect.top + sY;
 
-        // Determine resize direction multipliers
-        const xMul = dir.includes("w") ? -1 : (dir.includes("e") ? 1 : 0);
-        const yMul = dir.includes("n") ? -1 : (dir.includes("s") ? 1 : 0);
+                // Direction multipliers
+                const xMul = dir.includes("w") ? -1 : (dir.includes("e") ? 1 : 0);
+                const yMul = dir.includes("n") ? -1 : (dir.includes("s") ? 1 : 0);
 
-        // Use whichever delta is larger in magnitude to keep proportion
-        const dist = Math.abs(dx) > Math.abs(dy) ? dx * xMul : dy * yMul;
+                // Largest delta rules the scale amount
+                const delta = Math.abs(dx) > Math.abs(dy) ? dx * xMul : dy * yMul;
 
-        // Compute new width & height
-        w = Math.max(50, rect.width + dist * (xMul !== 0 ? 1 : ratio));
-        h = w / ratio;
+                // Compute proportional size
+                w = Math.max(50, rect.width + delta);
+                h = w / ratio;
 
-        // Reposition if grabbing from left/top sides
-        if (dir.includes("w")) l = rect.left + sX - (w - rect.width);
-        if (dir.includes("n")) t = rect.top + sY - (h - rect.height);
+                // Adjust position if resizing from left or top
+                if (dir.includes("w")) {
+                    l = rect.left + sX - (w - rect.width);
+                }
+                if (dir.includes("n")) {
+                    t = rect.top + sY - (h - rect.height);
+                }
 
-        el.style.width = w + "px";
-        el.style.height = h + "px";
-        el.style.left = l + "px";
-        el.style.top = t + "px";
-    }
+                // Apply new values
+                el.style.width = w + "px";
+                el.style.height = h + "px";
+                el.style.left = l + "px";
+                el.style.top = t + "px";
+            }
 
-    function onUp() {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-    }
+            function onUp() {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            }
 
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-}
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        }
 
-        /* ---------- Dock/Undock ---------- */
+        /* ---------- Dragging ---------- */
+        function enableDragging(el) {
+            let dragging = false;
+            let offX = 0, offY = 0;
+
+            function onMouseDown(ev) {
+                if (ev.target !== el) return;
+                dragging = true;
+
+                const r = el.getBoundingClientRect();
+                const sX = window.pageXOffset, sY = window.pageYOffset;
+
+                offX = ev.pageX - (r.left + sX);
+                offY = ev.pageY - (r.top + sY);
+
+                ev.preventDefault();
+            }
+
+            function onMove(ev) {
+                if (!dragging) return;
+                el.style.left = ev.pageX - offX + "px";
+                el.style.top = ev.pageY - offY + "px";
+            }
+
+            function onUp() {
+                dragging = false;
+            }
+
+            el.addEventListener("mousedown", onMouseDown);
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+
+            el._dragHandles = { onMouseDown, onMove, onUp };
+        }
+
+        /* ---------- Dock / Undock ---------- */
         function undock(el) {
             el.dataset.docked = "false";
             el.style.cursor = "move";
             el.style.backgroundColor = "#fff";
-
             btn.style.display = "block";
 
             addResizeHandles(el);
@@ -152,7 +193,6 @@ function startResize(e, dir, el) {
             el.dataset.docked = "true";
             el.style.cursor = "default";
             el.style.backgroundColor = "transparent";
-
             btn.style.display = "none";
 
             [...el.querySelectorAll("div[data-dir]")].forEach(x => x.remove());
