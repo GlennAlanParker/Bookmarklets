@@ -20,6 +20,7 @@ javascript:(function () {
             height:100%;
             object-fit:contain;
             pointer-events:auto;
+            display:block;
         `;
 
         img.onload = () => {
@@ -50,17 +51,20 @@ javascript:(function () {
         let locked = false;
         let dragging = false, offX = 0, offY = 0;
 
-        overlay.addEventListener("mousedown", ev => {
+        function startDrag(ev) {
             if (locked) return;
-
-            // FIXED: allow dragging when clicking overlay OR image
-            if (ev.target !== overlay && ev.target !== img) return;
+            // Only allow drag if clicking overlay or image (not resize handles)
+            if (resizeHandles.includes(ev.target)) return;
 
             dragging = true;
             const r = overlay.getBoundingClientRect();
             offX = ev.pageX - (r.left + window.pageXOffset);
             offY = ev.pageY - (r.top + window.pageYOffset);
-        });
+            ev.preventDefault();
+        }
+
+        overlay.addEventListener("mousedown", startDrag);
+        img.addEventListener("mousedown", startDrag);
 
         document.addEventListener("mousemove", ev => {
             if (!dragging || locked) return;
@@ -105,7 +109,7 @@ javascript:(function () {
             overlay.appendChild(h);
         });
 
-        /* -------- PROPORTIONAL RESIZE -------- */
+        /* -------- RESIZE LOGIC -------- */
         function startResize(e, dir) {
             const startX = e.pageX;
             const startY = e.pageY;
