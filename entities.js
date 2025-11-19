@@ -1,6 +1,6 @@
 javascript:(function(){
   var e={
-    // Essentials / Most common
+    // Very common
     "\u00A0":"&nbsp;",
     "\u2019":"&rsquo;",
     "\u2018":"&lsquo;",
@@ -21,14 +21,14 @@ javascript:(function(){
     "\u00B7":"&middot;","\u00B8":"&cedil;","\u00B9":"&sup1;","\u00BA":"&ordm;","\u00BB":"&raquo;",
     "\u00BC":"&frac14;","\u00BD":"&frac12;","\u00BE":"&frac34;","\u00BF":"&iquest;",
 
-    // Lower punctuation / bullets
-    "\u201A":"&sbquo;","\u201E":"&bdquo;","\u2022":"&bull;",
+    // Bullets
+    "\u2022":"&bull;","\u201A":"&sbquo;","\u201E":"&bdquo;",
 
     // Arrows
     "\u2190":"&larr;","\u2191":"&uarr;","\u2192":"&rarr;","\u2193":"&darr;","\u2194":"&harr;",
     "\u21D0":"&lArr;","\u21D1":"&uArr;","\u21D2":"&rArr;","\u21D3":"&dArr;","\u21D4":"&hArr;",
 
-    // Math symbols
+    // Math
     "\u00D7":"&times;","\u00F7":"&divide;","\u2212":"&minus;","\u2260":"&ne;",
     "\u2264":"&le;","\u2265":"&ge;","\u221E":"&infty;","\u2202":"&part;","\u220F":"&prod;",
     "\u2211":"&sum;","\u2208":"&in;","\u2209":"&notin;","\u221A":"&radic;","\u222B":"&int;",
@@ -42,24 +42,22 @@ javascript:(function(){
     if(node.nodeType===3 && node.nodeValue.trim()){
       var original=node.nodeValue;
 
-      // Replace each matched char with the actual entity *as text* (not rendered)
+      // Replace each char
       var replaced = original.replace(/[\u00A0-\uFFFF]/g, function(c){
-        return e[c] || ("&#"+c.charCodeAt(0)+";");
+        return e[c] || ("&#" + c.charCodeAt(0) + ";");
       });
 
-      if(replaced!==original){
+      if(replaced !== original){
         var frag=document.createDocumentFragment();
-        
-        // Split so each entity is individually processed
+
         replaced.split(/(&[A-Za-z0-9#]+;)/).forEach(function(part){
           if(/^&[A-Za-z0-9#]+;$/.test(part)){
             var s=document.createElement("span");
-            // Show raw entity text
-            s.textContent = part;
-            s.style.background="yellow";
-            s.style.color="black";
-            s.style.fontWeight="bold";
-            s.style.padding="1px 2px";
+            s.textContent = part;  // IMPORTANT: always literal text
+            s.style.background = "yellow";
+            s.style.color = "black";
+            s.style.fontWeight = "bold";
+            s.style.padding = "1px 3px";
             frag.appendChild(s);
           } else {
             frag.appendChild(document.createTextNode(part));
@@ -68,7 +66,7 @@ javascript:(function(){
 
         node.replaceWith(frag);
       }
-    } else if(node.nodeType===1){
+    } else if(node.nodeType === 1){
       [...node.childNodes].forEach(highlight);
     }
   }
