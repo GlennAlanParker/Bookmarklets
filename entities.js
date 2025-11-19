@@ -42,24 +42,30 @@ javascript:(function(){
     if(node.nodeType===3 && node.nodeValue.trim()){
       var original=node.nodeValue;
 
+      // Replace each matched char with the actual entity *as text* (not rendered)
       var replaced = original.replace(/[\u00A0-\uFFFF]/g, function(c){
-        return e[c] || "&#"+c.charCodeAt(0)+";";
+        return e[c] || ("&#"+c.charCodeAt(0)+";");
       });
 
       if(replaced!==original){
         var frag=document.createDocumentFragment();
+        
+        // Split so each entity is individually processed
         replaced.split(/(&[A-Za-z0-9#]+;)/).forEach(function(part){
           if(/^&[A-Za-z0-9#]+;$/.test(part)){
             var s=document.createElement("span");
-            s.innerHTML=part;
+            // Show raw entity text
+            s.textContent = part;
             s.style.background="yellow";
             s.style.color="black";
             s.style.fontWeight="bold";
+            s.style.padding="1px 2px";
             frag.appendChild(s);
           } else {
             frag.appendChild(document.createTextNode(part));
           }
         });
+
         node.replaceWith(frag);
       }
     } else if(node.nodeType===1){
