@@ -46,34 +46,36 @@ javascript:(function () {
         overlay.appendChild(removeBtn);
         document.body.appendChild(overlay);
 
-        /* -------- DRAGGING -------- */
-        (function enableDragging() {
-            let dragging = false, offX = 0, offY = 0;
+        /* ---------------- DRAGGING ---------------- */
+        let draggingEnabled = true;
+        let dragging = false, offX = 0, offY = 0;
 
-            overlay.addEventListener("mousedown", ev => {
-                if (ev.target !== overlay) return;
-                dragging = true;
-                const r = overlay.getBoundingClientRect();
-                offX = ev.pageX - (r.left + window.pageXOffset);
-                offY = ev.pageY - (r.top + window.pageYOffset);
-            });
+        overlay.addEventListener("mousedown", ev => {
+            if (!draggingEnabled) return;
+            if (ev.target !== overlay) return;
+            dragging = true;
+            const r = overlay.getBoundingClientRect();
+            offX = ev.pageX - (r.left + window.pageXOffset);
+            offY = ev.pageY - (r.top + window.pageYOffset);
+        });
 
-            document.addEventListener("mousemove", ev => {
-                if (!dragging) return;
-                overlay.style.left = ev.pageX - offX + "px";
-                overlay.style.top = ev.pageY - offY + "px";
-            });
+        document.addEventListener("mousemove", ev => {
+            if (!dragging || !draggingEnabled) return;
+            overlay.style.left = ev.pageX - offX + "px";
+            overlay.style.top = ev.pageY - offY + "px";
+        });
 
-            document.addEventListener("mouseup", () => dragging = false);
-        })();
+        document.addEventListener("mouseup", () => dragging = false);
 
-        /* -------- RESIZE HANDLES -------- */
+        /* -------------- RESIZE HANDLES -------------- */
         const dirs = ["n","ne","e","se","s","sw","w","nw"];
         const pos = {
             n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
             se:["100%","100%"], s:["50%","100%"],
             sw:["0","100%"], w:["0","50%"], nw:["0","0"]
         };
+
+        const resizeHandles = [];
 
         dirs.forEach(dir => {
             const h = document.createElement("div");
@@ -92,13 +94,15 @@ javascript:(function () {
 
             h.addEventListener("mousedown", e => {
                 e.preventDefault();
+                if (!draggingEnabled) return;
                 startResize(e, dir);
             });
 
+            resizeHandles.push(h);
             overlay.appendChild(h);
         });
 
-        /* -------- PROPORTIONAL RESIZE -------- */
+        /* ---------------- RESIZE LOGIC ---------------- */
         function startResize(e, dir) {
             const startX = e.pageX;
             const startY = e.pageY;
@@ -137,6 +141,23 @@ javascript:(function () {
             document.addEventListener("mousemove", move);
             document.addEventListener("mouseup", stop);
         }
+
+        /* -------------- LOCK / UNLOCK ON DOUBLE CLICK -------------- */
+        let locked = false;
+
+        img.addEventListener("dblclick", () => {
+            locked = !locked;
+
+            if (locked) {
+                draggingEnabled = false;
+                overlay.style.cursor = "default";
+                resizeHandles.forEach(h => h.style.display = "none");
+            } else {
+                draggingEnabled = true;
+                overlay.style.cursor = "move";
+                resizeHandles.forEach(h => h.style.display = "block");
+            }
+        });
 
     }
 
