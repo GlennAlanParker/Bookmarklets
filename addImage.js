@@ -19,7 +19,7 @@ javascript:(function () {
             width:100%;
             height:100%;
             object-fit:contain;
-            pointer-events:auto; /* Needed for dblclick */
+            pointer-events:auto;
         `;
 
         img.onload = () => {
@@ -46,13 +46,16 @@ javascript:(function () {
         overlay.appendChild(removeBtn);
         document.body.appendChild(overlay);
 
-        /* ---------------- DRAGGING ---------------- */
+        /* -------- DRAGGING -------- */
         let locked = false;
         let dragging = false, offX = 0, offY = 0;
 
         overlay.addEventListener("mousedown", ev => {
-            if (locked) return;               // ⛔ No dragging when locked
-            if (ev.target !== overlay) return;
+            if (locked) return;
+
+            // FIXED: allow dragging when clicking overlay OR image
+            if (ev.target !== overlay && ev.target !== img) return;
+
             dragging = true;
             const r = overlay.getBoundingClientRect();
             offX = ev.pageX - (r.left + window.pageXOffset);
@@ -60,14 +63,14 @@ javascript:(function () {
         });
 
         document.addEventListener("mousemove", ev => {
-            if (!dragging || locked) return;  // ⛔ No movement when locked
+            if (!dragging || locked) return;
             overlay.style.left = ev.pageX - offX + "px";
             overlay.style.top = ev.pageY - offY + "px";
         });
 
         document.addEventListener("mouseup", () => dragging = false);
 
-        /* ---------------- RESIZE HANDLES ---------------- */
+        /* -------- RESIZE HANDLES -------- */
         const dirs = ["n","ne","e","se","s","sw","w","nw"];
         const pos = {
             n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
@@ -94,7 +97,7 @@ javascript:(function () {
 
             h.addEventListener("mousedown", e => {
                 e.preventDefault();
-                if (locked) return;           // ⛔ No resize when locked
+                if (locked) return;
                 startResize(e, dir);
             });
 
@@ -102,7 +105,7 @@ javascript:(function () {
             overlay.appendChild(h);
         });
 
-        /* ---------------- RESIZE LOGIC ---------------- */
+        /* -------- PROPORTIONAL RESIZE -------- */
         function startResize(e, dir) {
             const startX = e.pageX;
             const startY = e.pageY;
@@ -113,7 +116,7 @@ javascript:(function () {
             const ySign = dir.includes("n") ? -1 : dir.includes("s") ? 1 : 0;
 
             function move(ev) {
-                if (locked) return;           // ⛔ No resizing while locked
+                if (locked) return;
 
                 const dx = ev.pageX - startX;
                 const dy = ev.pageY - startY;
@@ -144,18 +147,16 @@ javascript:(function () {
             document.addEventListener("mouseup", stop);
         }
 
-        /* ---------------- LOCK / UNLOCK TOGGLE ---------------- */
+        /* -------- LOCK / UNLOCK ON DOUBLE CLICK -------- */
         img.addEventListener("dblclick", () => {
             locked = !locked;
 
             if (locked) {
                 overlay.style.cursor = "default";
-
                 resizeHandles.forEach(h => h.style.display = "none");
                 removeBtn.style.display = "none";
             } else {
                 overlay.style.cursor = "move";
-
                 resizeHandles.forEach(h => h.style.display = "block");
                 removeBtn.style.display = "block";
             }
@@ -163,7 +164,7 @@ javascript:(function () {
 
     }
 
-    /* ---------------- URL PROMPT ---------------- */
+    /* -------- URL PROMPT -------- */
     setTimeout(() => {
         const url = prompt("Enter image URL:");
         if (url) createOverlay(url);
