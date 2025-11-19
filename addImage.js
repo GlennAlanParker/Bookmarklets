@@ -1,188 +1,149 @@
 javascript:(function () {
+
     function createOverlay(url) {
         const overlay = document.createElement("div");
-        overlay.dataset.docked = "false";
-
-        Object.assign(overlay.style, {
-            position: "absolute",
-            top: window.pageYOffset + 100 + "px",
-            left: window.pageXOffset + 100 + "px",
-            width: "200px",
-            height: "150px",
-            zIndex: 999999,
-            overflow: "hidden",
-            backgroundColor: "#fff",
-            cursor: "move",
-            border: "1px solid #000"
-        });
+        overlay.style.cssText = `
+            position:absolute;
+            top:${window.pageYOffset + 100}px;
+            left:${window.pageXOffset + 100}px;
+            z-index:999999;
+            background:#fff;
+            cursor:move;
+            border:1px solid #000;
+            overflow:hidden;
+        `;
 
         const img = document.createElement("img");
         img.src = url;
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "contain";
-        img.style.pointerEvents = "none";
+        img.style.cssText = `
+            width:100%;
+            height:100%;
+            object-fit:contain;
+            pointer-events:none;
+        `;
 
         img.onload = () => {
             overlay.style.width = img.naturalWidth + "px";
             overlay.style.height = img.naturalHeight + "px";
         };
 
-        const btn = document.createElement("button");
-        btn.textContent = "Remove";
-        Object.assign(btn.style, {
-            position: "absolute",
-            top: "20px",
-            left: "20px",
-            zIndex: 1000000,
-            padding: "4px 8px",
-            backgroundColor: "red",
-            color: "white",
-            border: "none",
-            fontWeight: "bold",
-            cursor: "pointer"
-        });
-        btn.onclick = () => overlay.remove();
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.style.cssText = `
+            position:absolute;
+            top:10px;
+            left:10px;
+            z-index:1000000;
+            background:red;
+            color:white;
+            border:none;
+            padding:4px 8px;
+            cursor:pointer;
+        `;
+        removeBtn.onclick = () => overlay.remove();
 
         overlay.appendChild(img);
-        overlay.appendChild(btn);
+        overlay.appendChild(removeBtn);
+        document.body.appendChild(overlay);
 
-        /* ----------------- RESIZE HANDLES ------------------ */
-        function addResizeHandles(el) {
-            const dirs = ["n","ne","e","se","s","sw","w","nw"];
-            const positions = {
-                n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
-                se:["100%","100%"], s:["50%","100%"],
-                sw:["0","100%"], w:["0","50%"], nw:["0","0"]
-            };
+        /* -------- DRAGGING -------- */
+        (function enableDragging() {
+            let dragging = false, offX = 0, offY = 0;
 
-            dirs.forEach(dir => {
-                const h = document.createElement("div");
-                h.dataset.dir = dir;
-
-                Object.assign(h.style, {
-                    position: "absolute",
-                    width: "14px",
-                    height: "14px",
-                    background: "#000",
-                    border: "1px solid #000",
-                    zIndex: 1000000,
-                    cursor: dir + "-resize",
-                    transform: "translate(-50%, -50%)",
-                    left: positions[dir][0],
-                    top: positions[dir][1]
-                });
-
-                h.addEventListener("mousedown", e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    startResize(e, dir, el);
-                });
-
-                el.appendChild(h);
-            });
-        }
-
-        /* ------------- PROPORTIONAL RESIZE LOGIC ---------------- */
-        function startResize(e, dir, el) {
-            const startX = e.pageX;
-            const startY = e.pageY;
-
-            const rect = el.getBoundingClientRect();
-            const ratio = img.naturalWidth / img.naturalHeight;
-
-            const sX = window.pageXOffset;
-            const sY = window.pageYOffset;
-
-            function onMove(ev) {
-                const dx = ev.pageX - startX;
-                const dy = ev.pageY - startY;
-
-                let newW = rect.width;
-                let newH = rect.height;
-                let newL = rect.left + sX;
-                let newT = rect.top + sY;
-
-                const xSign = dir.includes("w") ? -1 : dir.includes("e") ? 1 : 0;
-                const ySign = dir.includes("n") ? -1 : dir.includes("s") ? 1 : 0;
-
-                // Choose the bigger movement to keep aspect ratio correct
-                const delta = Math.abs(dx) > Math.abs(dy) ? dx * xSign : dy * ySign;
-
-                newW = Math.max(50, rect.width + delta);
-                newH = newW / ratio;
-
-                // Position correction
-                if (dir.includes("w")) newL = rect.left + sX - (newW - rect.width);
-                if (dir.includes("n")) newT = rect.top + sY - (newH - rect.height);
-
-                el.style.width = newW + "px";
-                el.style.height = newH + "px";
-                el.style.left = newL + "px";
-                el.style.top = newT + "px";
-            }
-
-            function onUp() {
-                document.removeEventListener("mousemove", onMove);
-                document.removeEventListener("mouseup", onUp);
-            }
-
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-        }
-
-        /* ---------------------- DRAGGING ------------------------ */
-        function enableDragging(el) {
-            let dragging = false;
-            let offX = 0, offY = 0;
-
-            el.addEventListener("mousedown", ev => {
-                if (ev.target !== el) return;
+            overlay.addEventListener("mousedown", ev => {
+                if (ev.target !== overlay) return;
                 dragging = true;
-
-                const r = el.getBoundingClientRect();
+                const r = overlay.getBoundingClientRect();
                 offX = ev.pageX - (r.left + window.pageXOffset);
                 offY = ev.pageY - (r.top + window.pageYOffset);
-
-                ev.preventDefault();
             });
 
             document.addEventListener("mousemove", ev => {
                 if (!dragging) return;
-                el.style.left = ev.pageX - offX + "px";
-                el.style.top = ev.pageY - offY + "px";
+                overlay.style.left = ev.pageX - offX + "px";
+                overlay.style.top = ev.pageY - offY + "px";
             });
 
             document.addEventListener("mouseup", () => dragging = false);
-        }
+        })();
 
-        /* ---------------- DOCK / UNDOCK ------------------- */
-        function undock(el) {
-            el.dataset.docked = "false";
-            btn.style.display = "block";
-            el.style.cursor = "move";
+        /* -------- RESIZE HANDLES -------- */
+        const dirs = ["n","ne","e","se","s","sw","w","nw"];
+        const pos = {
+            n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
+            se:["100%","100%"], s:["50%","100%"],
+            sw:["0","100%"], w:["0","50%"], nw:["0","0"]
+        };
 
-            addResizeHandles(el);
-            enableDragging(el);
-        }
+        dirs.forEach(dir => {
+            const h = document.createElement("div");
+            h.dataset.dir = dir;
+            h.style.cssText = `
+                position:absolute;
+                width:12px;height:12px;
+                background:black;
+                border:1px solid black;
+                cursor:${dir}-resize;
+                transform:translate(-50%,-50%);
+                left:${pos[dir][0]};
+                top:${pos[dir][1]};
+                z-index:1000000;
+            `;
 
-        function dock(el) {
-            el.dataset.docked = "true";
-            btn.style.display = "none";
+            h.addEventListener("mousedown", e => {
+                e.preventDefault();
+                startResize(e, dir);
+            });
 
-            [...el.querySelectorAll("div[data-dir]")].forEach(h => h.remove());
-        }
-
-        overlay.addEventListener("dblclick", () => {
-            if (overlay.dataset.docked === "true") undock(overlay);
-            else dock(overlay);
+            overlay.appendChild(h);
         });
 
-        undock(overlay);
+        /* -------- PROPORTIONAL RESIZE -------- */
+        function startResize(e, dir) {
+            const startX = e.pageX;
+            const startY = e.pageY;
+            const rect = overlay.getBoundingClientRect();
+            const ratio = img.naturalWidth / img.naturalHeight;
 
-        document.body.appendChild(overlay);
+            const xSign = dir.includes("w") ? -1 : dir.includes("e") ? 1 : 0;
+            const ySign = dir.includes("n") ? -1 : dir.includes("s") ? 1 : 0;
+
+            function move(ev) {
+                const dx = ev.pageX - startX;
+                const dy = ev.pageY - startY;
+
+                const delta = Math.abs(dx) > Math.abs(dy) ? dx * xSign : dy * ySign;
+
+                let w = Math.max(50, rect.width + delta);
+                let h = w / ratio;
+
+                let left = rect.left + window.pageXOffset;
+                let top = rect.top + window.pageYOffset;
+
+                if (dir.includes("w")) left = rect.left + window.pageXOffset - (w - rect.width);
+                if (dir.includes("n")) top = rect.top + window.pageYOffset - (h - rect.height);
+
+                overlay.style.width = w + "px";
+                overlay.style.height = h + "px";
+                overlay.style.left = left + "px";
+                overlay.style.top = top + "px";
+            }
+
+            function stop() {
+                document.removeEventListener("mousemove", move);
+                document.removeEventListener("mouseup", stop);
+            }
+
+            document.addEventListener("mousemove", move);
+            document.addEventListener("mouseup", stop);
+        }
+
     }
 
-    const url = prompt("Enter image URL:");
-    if (url) createOverlay(url);
+    /* -------- SAFER URL PROMPT -------- */
+    setTimeout(() => {
+        const url = prompt("Enter image URL:");
+        if (url) createOverlay(url);
+    }, 10);
+
 })();
