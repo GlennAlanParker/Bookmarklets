@@ -1,4 +1,4 @@
-javascript:(function () {
+javascript:(function () { 
 
     function createOverlay(url) {
         const overlay = document.createElement("div");
@@ -19,7 +19,7 @@ javascript:(function () {
             width:100%;
             height:100%;
             object-fit:contain;
-            pointer-events:none;
+            pointer-events:auto;   /* IMPORTANT: allow double-click */
         `;
 
         img.onload = () => {
@@ -46,7 +46,7 @@ javascript:(function () {
         overlay.appendChild(removeBtn);
         document.body.appendChild(overlay);
 
-        /* ---------------- DRAGGING ---------------- */
+        /* -------- DRAGGING -------- */
         let draggingEnabled = true;
         let dragging = false, offX = 0, offY = 0;
 
@@ -67,7 +67,7 @@ javascript:(function () {
 
         document.addEventListener("mouseup", () => dragging = false);
 
-        /* -------------- RESIZE HANDLES -------------- */
+        /* -------- RESIZE HANDLES -------- */
         const dirs = ["n","ne","e","se","s","sw","w","nw"];
         const pos = {
             n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
@@ -102,7 +102,7 @@ javascript:(function () {
             overlay.appendChild(h);
         });
 
-        /* ---------------- RESIZE LOGIC ---------------- */
+        /* -------- PROPORTIONAL RESIZE -------- */
         function startResize(e, dir) {
             const startX = e.pageX;
             const startY = e.pageY;
@@ -142,7 +142,7 @@ javascript:(function () {
             document.addEventListener("mouseup", stop);
         }
 
-        /* -------------- LOCK / UNLOCK ON DOUBLE CLICK -------------- */
+        /* -------- LOCK / UNLOCK ON DOUBLE CLICK -------- */
         let locked = false;
 
         img.addEventListener("dblclick", () => {
@@ -151,11 +151,22 @@ javascript:(function () {
             if (locked) {
                 draggingEnabled = false;
                 overlay.style.cursor = "default";
+
+                // Hide resize handles
                 resizeHandles.forEach(h => h.style.display = "none");
+
+                // Hide remove button
+                removeBtn.style.display = "none";
+
             } else {
                 draggingEnabled = true;
                 overlay.style.cursor = "move";
+
+                // Show resize handles
                 resizeHandles.forEach(h => h.style.display = "block");
+
+                // Show remove button
+                removeBtn.style.display = "block";
             }
         });
 
