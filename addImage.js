@@ -89,85 +89,52 @@ javascript:(function() {
             });
         }
 
-        function startResize(e, dir, el) {
-            const startX = e.pageX, startY = e.pageY;
-            const rect = el.getBoundingClientRect();
-            const sX = window.pageXOffset, sY = window.pageYOffset;
+function startResize(e, dir, el) {
+    const startX = e.pageX, startY = e.pageY;
+    const rect = el.getBoundingClientRect();
+    const sX = window.pageXOffset, sY = window.pageYOffset;
 
-            const img = el.querySelector("img");
-            const ratio = img ? img.naturalWidth / img.naturalHeight : 1;
+    const img = el.querySelector("img");
+    const ratio = img ? img.naturalWidth / img.naturalHeight : 1;
 
-            function onMove(ev) {
-                let l = rect.left + sX;
-                let t = rect.top + sY;
-                let w = rect.width;
-                let h = rect.height;
-                const dx = ev.pageX - startX;
-                const dy = ev.pageY - startY;
+    function onMove(ev) {
+        const dx = ev.pageX - startX;
+        const dy = ev.pageY - startY;
 
-                if (["ne","se","sw","nw"].includes(dir)) {
-                    const dist = Math.sqrt(dx*dx + dy*dy) * (dx + dy > 0 ? 1 : -1);
-                    w = Math.max(50, rect.width + dist);
-                    h = w / ratio;
+        let w = rect.width;
+        let h = rect.height;
+        let l = rect.left + sX;
+        let t = rect.top + sY;
 
-                    if (dir.includes("w")) l = rect.left + sX - (w - rect.width);
-                    if (dir.includes("n")) t = rect.top + sY - (h - rect.height);
-                } else {
-                    if (dir.includes("e")) w = Math.max(50, rect.width + dx);
-                    if (dir.includes("s")) h = Math.max(50, rect.height + dy);
-                    if (dir.includes("w")) { w=Math.max(50,rect.width-dx); l=rect.left+sX+dx; }
-                    if (dir.includes("n")) { h=Math.max(50,rect.height-dy); t=rect.top+sY+dy; }
-                }
+        // Determine resize direction multipliers
+        const xMul = dir.includes("w") ? -1 : (dir.includes("e") ? 1 : 0);
+        const yMul = dir.includes("n") ? -1 : (dir.includes("s") ? 1 : 0);
 
-                el.style.width = w + "px";
-                el.style.height = h + "px";
-                el.style.left = l + "px";
-                el.style.top = t + "px";
-            }
+        // Use whichever delta is larger in magnitude to keep proportion
+        const dist = Math.abs(dx) > Math.abs(dy) ? dx * xMul : dy * yMul;
 
-            function onUp() {
-                document.removeEventListener("mousemove", onMove);
-                document.removeEventListener("mouseup", onUp);
-            }
+        // Compute new width & height
+        w = Math.max(50, rect.width + dist * (xMul !== 0 ? 1 : ratio));
+        h = w / ratio;
 
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-        }
+        // Reposition if grabbing from left/top sides
+        if (dir.includes("w")) l = rect.left + sX - (w - rect.width);
+        if (dir.includes("n")) t = rect.top + sY - (h - rect.height);
 
-        /* ---------- Dragging ---------- */
-        function enableDragging(el) {
-            let dragging = false;
-            let offX = 0, offY = 0;
+        el.style.width = w + "px";
+        el.style.height = h + "px";
+        el.style.left = l + "px";
+        el.style.top = t + "px";
+    }
 
-            function onMouseDown(ev) {
-                if (ev.target !== el) return;
-                dragging = true;
+    function onUp() {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+    }
 
-                const r = el.getBoundingClientRect();
-                const sX = window.pageXOffset, sY = window.pageYOffset;
-
-                offX = ev.pageX - (r.left + sX);
-                offY = ev.pageY - (r.top + sY);
-
-                ev.preventDefault();
-            }
-
-            function onMove(ev) {
-                if (!dragging) return;
-                el.style.left = ev.pageX - offX + "px";
-                el.style.top = ev.pageY - offY + "px";
-            }
-
-            function onUp() {
-                dragging = false;
-            }
-
-            el.addEventListener("mousedown", onMouseDown);
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-
-            el._dragHandles = { onMouseDown, onMove, onUp };
-        }
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+}
 
         /* ---------- Dock/Undock ---------- */
         function undock(el) {
