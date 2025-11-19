@@ -1,37 +1,32 @@
-javascript:(function() {
+javascript:(function () {
     function createOverlay(url) {
         const overlay = document.createElement("div");
-        overlay.className = "custom-image-overlay";
         overlay.dataset.docked = "false";
-
-        const sX = window.pageXOffset, sY = window.pageYOffset;
 
         Object.assign(overlay.style, {
             position: "absolute",
-            top: sY + 100 + "px",
-            left: sX + 100 + "px",
-            width: "300px",
-            height: "200px",
-            zIndex: "999999",
+            top: window.pageYOffset + 100 + "px",
+            left: window.pageXOffset + 100 + "px",
+            width: "200px",
+            height: "150px",
+            zIndex: 999999,
             overflow: "hidden",
             backgroundColor: "#fff",
-            cursor: "move"
+            cursor: "move",
+            border: "1px solid #000"
         });
 
         const img = document.createElement("img");
         img.src = url;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "contain";
+        img.style.pointerEvents = "none";
 
         img.onload = () => {
             overlay.style.width = img.naturalWidth + "px";
             overlay.style.height = img.naturalHeight + "px";
         };
-
-        Object.assign(img.style, {
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            pointerEvents: "none"
-        });
 
         const btn = document.createElement("button");
         btn.textContent = "Remove";
@@ -39,7 +34,7 @@ javascript:(function() {
             position: "absolute",
             top: "20px",
             left: "20px",
-            zIndex: "1000000",
+            zIndex: 1000000,
             padding: "4px 8px",
             backgroundColor: "red",
             color: "white",
@@ -52,9 +47,15 @@ javascript:(function() {
         overlay.appendChild(img);
         overlay.appendChild(btn);
 
-        /* ---------- Resize Handles ---------- */
+        /* ----------------- RESIZE HANDLES ------------------ */
         function addResizeHandles(el) {
             const dirs = ["n","ne","e","se","s","sw","w","nw"];
+            const positions = {
+                n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
+                se:["100%","100%"], s:["50%","100%"],
+                sw:["0","100%"], w:["0","50%"], nw:["0","0"]
+            };
+
             dirs.forEach(dir => {
                 const h = document.createElement("div");
                 h.dataset.dir = dir;
@@ -65,19 +66,12 @@ javascript:(function() {
                     height: "14px",
                     background: "#000",
                     border: "1px solid #000",
-                    zIndex: "1000000",
+                    zIndex: 1000000,
                     cursor: dir + "-resize",
-                    transform: "translate(-50%, -50%)"
+                    transform: "translate(-50%, -50%)",
+                    left: positions[dir][0],
+                    top: positions[dir][1]
                 });
-
-                const pos = {
-                    n:["50%","0"], ne:["100%","0"], e:["100%","50%"],
-                    se:["100%","100%"], s:["50%","100%"],
-                    sw:["0","100%"], w:["0","50%"], nw:["0","0"]
-                };
-
-                h.style.left = pos[dir][0];
-                h.style.top = pos[dir][1];
 
                 h.addEventListener("mousedown", e => {
                     e.preventDefault();
@@ -89,49 +83,43 @@ javascript:(function() {
             });
         }
 
-        /* ---------- PROPORTIONAL RESIZE LOGIC ---------- */
+        /* ------------- PROPORTIONAL RESIZE LOGIC ---------------- */
         function startResize(e, dir, el) {
             const startX = e.pageX;
             const startY = e.pageY;
-            const rect = el.getBoundingClientRect();
-            const sX = window.pageXOffset, sY = window.pageYOffset;
 
-            const img = el.querySelector("img");
-            const ratio = img ? img.naturalWidth / img.naturalHeight : 1;
+            const rect = el.getBoundingClientRect();
+            const ratio = img.naturalWidth / img.naturalHeight;
+
+            const sX = window.pageXOffset;
+            const sY = window.pageYOffset;
 
             function onMove(ev) {
                 const dx = ev.pageX - startX;
                 const dy = ev.pageY - startY;
 
-                let w = rect.width;
-                let h = rect.height;
-                let l = rect.left + sX;
-                let t = rect.top + sY;
+                let newW = rect.width;
+                let newH = rect.height;
+                let newL = rect.left + sX;
+                let newT = rect.top + sY;
 
-                // Direction multipliers
-                const xMul = dir.includes("w") ? -1 : (dir.includes("e") ? 1 : 0);
-                const yMul = dir.includes("n") ? -1 : (dir.includes("s") ? 1 : 0);
+                const xSign = dir.includes("w") ? -1 : dir.includes("e") ? 1 : 0;
+                const ySign = dir.includes("n") ? -1 : dir.includes("s") ? 1 : 0;
 
-                // Largest delta rules the scale amount
-                const delta = Math.abs(dx) > Math.abs(dy) ? dx * xMul : dy * yMul;
+                // Choose the bigger movement to keep aspect ratio correct
+                const delta = Math.abs(dx) > Math.abs(dy) ? dx * xSign : dy * ySign;
 
-                // Compute proportional size
-                w = Math.max(50, rect.width + delta);
-                h = w / ratio;
+                newW = Math.max(50, rect.width + delta);
+                newH = newW / ratio;
 
-                // Adjust position if resizing from left or top
-                if (dir.includes("w")) {
-                    l = rect.left + sX - (w - rect.width);
-                }
-                if (dir.includes("n")) {
-                    t = rect.top + sY - (h - rect.height);
-                }
+                // Position correction
+                if (dir.includes("w")) newL = rect.left + sX - (newW - rect.width);
+                if (dir.includes("n")) newT = rect.top + sY - (newH - rect.height);
 
-                // Apply new values
-                el.style.width = w + "px";
-                el.style.height = h + "px";
-                el.style.left = l + "px";
-                el.style.top = t + "px";
+                el.style.width = newW + "px";
+                el.style.height = newH + "px";
+                el.style.left = newL + "px";
+                el.style.top = newT + "px";
             }
 
             function onUp() {
@@ -143,47 +131,36 @@ javascript:(function() {
             document.addEventListener("mouseup", onUp);
         }
 
-        /* ---------- Dragging ---------- */
+        /* ---------------------- DRAGGING ------------------------ */
         function enableDragging(el) {
             let dragging = false;
             let offX = 0, offY = 0;
 
-            function onMouseDown(ev) {
+            el.addEventListener("mousedown", ev => {
                 if (ev.target !== el) return;
                 dragging = true;
 
                 const r = el.getBoundingClientRect();
-                const sX = window.pageXOffset, sY = window.pageYOffset;
-
-                offX = ev.pageX - (r.left + sX);
-                offY = ev.pageY - (r.top + sY);
+                offX = ev.pageX - (r.left + window.pageXOffset);
+                offY = ev.pageY - (r.top + window.pageYOffset);
 
                 ev.preventDefault();
-            }
+            });
 
-            function onMove(ev) {
+            document.addEventListener("mousemove", ev => {
                 if (!dragging) return;
                 el.style.left = ev.pageX - offX + "px";
                 el.style.top = ev.pageY - offY + "px";
-            }
+            });
 
-            function onUp() {
-                dragging = false;
-            }
-
-            el.addEventListener("mousedown", onMouseDown);
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-
-            el._dragHandles = { onMouseDown, onMove, onUp };
+            document.addEventListener("mouseup", () => dragging = false);
         }
 
-        /* ---------- Dock / Undock ---------- */
+        /* ---------------- DOCK / UNDOCK ------------------- */
         function undock(el) {
             el.dataset.docked = "false";
-            el.style.cursor = "move";
-            el.style.backgroundColor = "#fff";
             btn.style.display = "block";
+            el.style.cursor = "move";
 
             addResizeHandles(el);
             enableDragging(el);
@@ -191,18 +168,9 @@ javascript:(function() {
 
         function dock(el) {
             el.dataset.docked = "true";
-            el.style.cursor = "default";
-            el.style.backgroundColor = "transparent";
             btn.style.display = "none";
 
-            [...el.querySelectorAll("div[data-dir]")].forEach(x => x.remove());
-
-            if (el._dragHandles) {
-                el.removeEventListener("mousedown", el._dragHandles.onMouseDown);
-                document.removeEventListener("mousemove", el._dragHandles.onMove);
-                document.removeEventListener("mouseup", el._dragHandles.onUp);
-                delete el._dragHandles;
-            }
+            [...el.querySelectorAll("div[data-dir]")].forEach(h => h.remove());
         }
 
         overlay.addEventListener("dblclick", () => {
