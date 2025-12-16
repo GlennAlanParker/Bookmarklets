@@ -1,0 +1,91 @@
+javascript:(function(){
+  var t=document.title,u=location.href,h=location.host;
+  var l=[...document.getElementsByTagName("a")].map(function(e){
+    var t=e.href,n=e.textContent.trim()||"No Text",r=e.querySelector("img,picture source"),o,a=e.outerHTML.trim(),i=a.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    if(r){
+      var s=r.getAttribute("src")||r.getAttribute("srcset")||t;
+      if(s.indexOf("http")!==0)s=new URL(s,location.href).href;
+      var c=s.split("?")[0].split("#")[0],d=c.split("/").pop();
+      o='Image Link: <a href="'+s+'" target="_blank">'+d+'</a><br>'+c+'<br><br><a href="'+t+'" target="_blank">'+n+'</a><br>'+t;
+    } else o='<a href="'+t+'" target="_blank">'+n+'</a><br>'+t;
+    return {text:n,href:t,colOriginal:o,markupHTML:i,rawMarkup:a};
+  });
+
+  var w=window.open();
+  w.document.write('<!doctype html><html><head><title>Links – '+t+'</title></head><body><div id="header"><h1>Link Inventory<br><small>'+t+'</small><br><small>'+u+'</small></h1><div id="linkCount">Link Count: 0</div><div id="controls"></div></div><div id="theadWrap"><table><thead><tr><th>#</th><th>Link</th><th>HTML</th></tr></thead></table></div><table id="tbl"><tbody></tbody></table><div id="backToTop">↑</div></body></html>');
+  w.document.close();
+
+  var d=w.document,j=d.createElement("script");
+  j.src="https://code.jquery.com/jquery-3.7.1.min.js";
+  j.onload=function(){
+    var $=w.jQuery.noConflict(true),e=l.slice();
+    var H=d.getElementById("header"),TW=d.getElementById("theadWrap"),LC=d.getElementById("linkCount");
+
+    function updateCount(){
+      var c=d.querySelectorAll("#tbl tbody tr").length;
+      LC.textContent="Link Count: "+c;
+      LC.style.transition="none"; LC.style.opacity=0;
+      setTimeout(function(){LC.style.transition="opacity 0.5s";LC.style.opacity=1},10);
+    }
+
+    d.getElementById("controls").innerHTML='<input id="search" placeholder="Search all columns…"><select id="sort"><option value="">Sort</option><option value="text-asc">Text A–Z</option><option value="text-desc">Text Z–A</option><option value="url-asc">URL A–Z</option><option value="url-desc">URL Z–A</option></select><select id="filter"><option value="">Filter</option><option value="all">All</option><option value="internal">Internal</option><option value="external">External</option></select>';
+
+    var n=d.createElement("style");
+    n.textContent="body{font-family:Arial;margin:0;text-align:center}#header{position:fixed;top:0;left:0;width:100%;background:#fff;z-index:1000;padding:12px 0;box-shadow:0 2px 6px rgba(0,0,0,.1)}#linkCount{font-weight:bold;font-size:1.4em;margin:6px 0}input,select{padding:6px;margin:6px;font-size:1em}#theadWrap{position:fixed;left:5%;width:90%;background:#f2f2f2;z-index:900}#theadWrap table{width:100%;border-collapse:separate;border-spacing:0}#theadWrap th{text-align:left;padding:12px 6px;border-bottom:2px solid #ccc}table#tbl{width:90%;margin:auto;border-collapse:separate;border-spacing:0 10px}table#tbl td{text-align:left;vertical-align:top;padding:12px 6px}table#tbl td:first-child{text-align:left}table#tbl tbody tr:nth-child(odd){background:#f9f9f9}table#tbl tbody tr:nth-child(even){background:#fff}table#tbl tbody tr:hover{background:#e2f0ff;transition:background 0.3s}.highlight{background:yellow;pointer-events:none}.markup{font-family:Consolas,monospace;background:#fafafa;padding:4px;display:block;white-space:pre-wrap;word-break:break-all}#backToTop{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:#333;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .3s;z-index:9999}#backToTop:hover{background:#000}";
+    d.head.appendChild(n);
+
+    function setOffset(){
+      var h1=H.offsetHeight,h2=TW.offsetHeight;
+      TW.style.top=h1+"px";
+      d.body.style.paddingTop=h1+h2+"px";
+    }
+    setOffset();
+    w.addEventListener("resize",setOffset);
+
+    function r(e){return e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+    function o(e,t){if(!t||!t.trim())return;var n=new RegExp(t.trim().split(/\s+/).map(r).join("|"),"gi");!function r(o){3===o.nodeType?(function(){var r=o.parentNode,i=o.textContent;if(n.test(i)){var a=document.createElement("span");a.innerHTML=i.replace(n,e=>'<span class="highlight">'+e+"</span>');r.replaceChild(a,o)}}()):1===o.nodeType&&o.childNodes.length&&Array.from(o.childNodes).forEach(r)}(e)}
+    function a(e,t){if(!t||!t.trim())return e;var n=new RegExp(t.trim().split(/\s+/).map(r).join("|"),"gi");return e.replace(n,e=>'<span class="highlight">'+e+"</span>')}
+
+    function i(t,n){
+      var r=d.querySelector("#tbl tbody");
+      r.innerHTML="";
+      t.forEach(function(e,t){
+        var n=d.createElement("tr");
+        n.innerHTML="<td>"+(t+1)+".</td><td class='linkcol'>"+e.colOriginal+"</td><td class='markupcol'>"+e.markupHTML+"</td>";
+        r.appendChild(n);
+      });
+      r.querySelectorAll("td.linkcol").forEach(function(e){o(e,n)});
+      r.querySelectorAll("td.markupcol").forEach(function(e){e.innerHTML=a(e.innerHTML,n)});
+      updateCount();
+    }
+
+    i(e,null);
+
+    $("#search",d).on("input",function(){
+      var t=this.value.toLowerCase();
+      i(e.filter(function(row){var full=d.createElement("div");full.innerHTML=row.colOriginal;return full.textContent.toLowerCase().includes(t)}),this.value);
+    });
+
+    $("#sort",d).on("change",function(){
+      var t=this.value;
+      if(t==="text-asc") e.sort(function(a,b){return a.text.localeCompare(b.text)});
+      if(t==="text-desc") e.sort(function(a,b){return b.text.localeCompare(a.text)});
+      if(t==="url-asc") e.sort(function(a,b){return a.href.localeCompare(b.href)});
+      if(t==="url-desc") e.sort(function(a,b){return b.href.localeCompare(a.href)});
+      i(e,$("#search",d).val());
+    });
+
+    $("#filter",d).on("change",function(){
+      var t=this.value;
+      if(t==="all") e=l.slice();
+      if(t==="internal") e=l.filter(function(a){return a.href.includes(h)});
+      if(t==="external") e=l.filter(function(a){return !a.href.includes(h)});
+      i(e,$("#search",d).val());
+    });
+
+    var b=d.getElementById("backToTop");
+    w.addEventListener("scroll",function(){b.style.opacity=w.scrollY>300?1:0});
+    b.onclick=function(){w.scrollTo({top:0,behavior:"smooth"})};
+  }
+  d.head.appendChild(j);
+})();
